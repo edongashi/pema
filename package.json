@@ -8,6 +8,7 @@
   "main": "src/index",
   "types": "src/index",
   "files": [
+    "src",
     "dist"
   ],
   "devDependencies": {
