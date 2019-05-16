@@ -9,7 +9,7 @@
   "types": "src/index",
   "files": [
     "src",
-    "dist"
+    "lib"
   ],
   "devDependencies": {
     "typescript": "^3.4.5"
