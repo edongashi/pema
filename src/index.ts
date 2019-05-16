@@ -1,2 +1,2 @@
-export * from './json'
+export { App } from './types'
 export * from './app'

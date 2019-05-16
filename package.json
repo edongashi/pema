@@ -2,13 +2,22 @@
   "name": "pema",
   "version": "0.1.0",
   "description": "Extensible MobX stores.",
-  "main": "lib/index.js",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "prepare": "npm run build"
   },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "files": [
-    "lib"
+    "dist"
   ],
+  "devDependencies": {
+    "typescript": "^3.4.5"
+  },
+  "peerDependencies": {
+    "mobx": "~5"
+  },
+  "dependencies": {},
   "author": "edongashi",
   "license": "MIT",
   "repository": {
@@ -24,12 +33,5 @@
   "bugs": {
     "url": "https://github.com/edongashi/pema/issues"
   },
-  "homepage": "https://github.com/edongashi/pema#readme",
-  "devDependencies": {
-    "typescript": "^3.4.5"
-  },
-  "peerDependencies": {
-    "mobx": "~5"
-  },
-  "dependencies": {}
+  "homepage": "https://github.com/edongashi/pema#readme"
 }
