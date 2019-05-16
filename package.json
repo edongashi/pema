@@ -3,11 +3,10 @@
   "version": "0.1.0",
   "description": "Extensible MobX stores.",
   "scripts": {
-    "build": "tsc",
-    "prepare": "npm run build"
+    "build": "tsc"
   },
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "src/index",
+  "types": "src/index",
   "files": [
     "dist"
   ],
