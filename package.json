@@ -5,10 +5,9 @@
   "scripts": {
     "build": "tsc"
   },
-  "main": "src/index",
-  "types": "src/index",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "files": [
-    "src",
     "lib"
   ],
   "devDependencies": {

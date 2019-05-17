@@ -11,13 +11,13 @@ export interface Dictionary {
 }
 
 export interface ServiceEnvFactory {
-  (app: AppNode): Dictionary
+  (app: any): Dictionary
 }
 
 export type ServiceEnv = Dictionary | ServiceEnvFactory
 
 export interface ServiceConstructor {
-  new(state: JValue, app: AppNode, env: Dictionary): any
+  new(state: JValue, app: any, env: Dictionary): any
 }
 
 export interface ServiceDependencies {
@@ -34,24 +34,6 @@ export type Instanced<T extends ServiceDependencies> = {
 
 export type Extended<T, U extends ServiceDependencies> = T & Instanced<U>
 
-export interface DependencyGraph {
-  readonly dependencies: ServiceDependencies
-}
-
-export type Services = DependencyGraph | ServiceDependencies | Dictionary
-
-export type AppServices<T extends Services> =
-  T extends DependencyGraph ? AppNode & Instanced<T["dependencies"]> :
-  T extends ServiceDependencies ? AppNode & Instanced<T> :
-  T extends Dictionary ? AppNode & T :
-  never
-
-export type AppEnv<T extends Dictionary>
-  = AppNode & { readonly env: T }
-
-export type App<TServices extends Services = {}, TEnv extends Dictionary = {}>
-  = AppServices<TServices> & AppEnv<TEnv>
-
 export interface AppNode {
   readonly root: AppNode
   readonly env: Dictionary
@@ -59,3 +41,17 @@ export interface AppNode {
   extend<T extends this>(plugin: (app: this) => T): T
   extend<T extends ServiceDependencies>(services: T): Extended<this, T>
 }
+
+export interface DependencyGraph {
+  readonly dependencies: ServiceDependencies
+}
+
+export type AppExtension = DependencyGraph | ServiceDependencies | Dictionary
+
+export type Services<T extends AppExtension> =
+  T extends DependencyGraph ? Instanced<T["dependencies"]> :
+  T extends ServiceDependencies ? Instanced<T> :
+  T extends Dictionary ? T :
+  never
+
+export type Env<T extends Dictionary> = { readonly env: T }
