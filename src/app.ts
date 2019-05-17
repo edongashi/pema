@@ -157,7 +157,6 @@ export function app(state?: JObject): AppNode {
 }
 
 export function withEnv
-  <T extends ServiceConstructor>(constructor: T, env: ServiceEnv):
-  Readonly<[T, ServiceEnv]> {
+  <T extends ServiceConstructor>(constructor: T, env: ServiceEnv): [T, ServiceEnv] {
   return [constructor, env]
 }
