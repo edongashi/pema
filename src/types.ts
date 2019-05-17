@@ -27,6 +27,7 @@ export interface ServiceDependencies {
 export type Instanced<T extends ServiceDependencies> = {
   readonly [Key in keyof T]:
   T[Key] extends [ServiceConstructor, ServiceEnv] ? InstanceType<T[Key][0]> :
+  T[Key] extends Readonly<[ServiceConstructor, ServiceEnv]> ? InstanceType<T[Key][0]> :
   T[Key] extends ServiceConstructor ? InstanceType<T[Key]> :
   T[Key] extends ServiceDependencies ? Instanced<T[Key]> :
   never
