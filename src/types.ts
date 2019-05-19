@@ -46,12 +46,13 @@ export interface DependencyGraph {
   readonly dependencies: ServiceDependencies
 }
 
-export type AppExtension = DependencyGraph | ServiceDependencies | Dictionary
+export type AppExtension =
+  | DependencyGraph
+  | ServiceDependencies
+  | Dictionary
 
 export type Services<T extends AppExtension> =
   T extends DependencyGraph ? Instanced<T["dependencies"]> :
   T extends ServiceDependencies ? Instanced<T> :
   T extends Dictionary ? T :
   never
-
-export type Env<T extends Dictionary> = { readonly env: T }

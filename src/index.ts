@@ -1,2 +1,2 @@
-export { AppNode, Services, Env } from './types'
+export { AppNode, Services } from './types'
 export * from './app'
