@@ -67,6 +67,10 @@ class AppNodeImpl implements AppNode {
             env = env(root)
           }
 
+          if (typeof (val as any).dependencies === 'object') {
+            root.extend((val as any).dependencies)
+          }
+
           const instance = new (val as ServiceConstructor)(state[key] || {}, root, env)
 
           Object.defineProperty(instance, '$app', {

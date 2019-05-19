@@ -6,7 +6,6 @@
     "moduleResolution": "node",
     "declaration": true,
     "outDir": "lib",
-    "alwaysStrict": true,
     "strict": true,
     "removeComments": true
   },
