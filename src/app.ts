@@ -7,7 +7,7 @@ import {
   ServiceConstructor,
   Extended,
   ServiceEnv } from './types'
-import { toJS, action } from 'mobx'
+import { toJS, runInAction } from 'mobx'
 
 class AppNodeImpl implements AppNode {
   private readonly __root: AppNodeImpl
@@ -98,8 +98,8 @@ class AppNodeImpl implements AppNode {
     }
   }
 
-  @action dispatch(event: Dictionary): void {
-    this.__dispatch(event)
+  dispatch(event: Dictionary): void {
+    runInAction(() => this.__dispatch(event))
   }
 
   private __dispatch(action: Dictionary): void {

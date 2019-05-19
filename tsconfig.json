@@ -1,13 +1,14 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
-    "moduleResolution": "node",
     "target": "es6",
+    "module": "CommonJS",
+    "moduleResolution": "node",
     "declaration": true,
     "outDir": "lib",
+    "alwaysStrict": true,
     "strict": true,
-    "removeComments": true,
-    "experimentalDecorators": true
+    "removeComments": true
   },
   "include": [
     "src/**/*"

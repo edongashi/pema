@@ -18,6 +18,7 @@
     "mobx": "~5"
   },
   "dependencies": {},
+  "sideEffects": false,
   "author": "edongashi",
   "license": "MIT",
   "repository": {
