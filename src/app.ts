@@ -6,7 +6,8 @@ import {
   ServiceDependencies,
   ServiceConstructor,
   Extended,
-  ServiceEnv } from './types'
+  ServiceEnv
+} from './types'
 import { toJS, runInAction } from 'mobx'
 
 class AppNodeImpl implements AppNode {
@@ -73,12 +74,14 @@ class AppNodeImpl implements AppNode {
 
           const instance = new (val as ServiceConstructor)(state[key] || {}, root, env)
 
-          Object.defineProperty(instance, '$app', {
-            enumerable: false,
-            configurable: true,
-            writable: true,
-            value: root
-          })
+          if (instance && typeof instance === 'object') {
+            Object.defineProperty(instance, '$app', {
+              enumerable: false,
+              configurable: true,
+              writable: true,
+              value: root
+            })
+          }
 
           node[key] = instance
           state[key] = null
