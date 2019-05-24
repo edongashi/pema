@@ -21,10 +21,19 @@ export declare type Instanced<T extends ServiceDependencies> = {
     readonly [Key in keyof T]: T[Key] extends [ServiceConstructor, ServiceEnv] ? InstanceType<T[Key][0]> : T[Key] extends ServiceConstructor ? InstanceType<T[Key]> : T[Key] extends ServiceDependencies ? Instanced<T[Key]> : never;
 };
 export declare type Extended<T, U extends ServiceDependencies> = T & Instanced<U>;
+export declare type EmitterMethod = (type: string, listener: EventListener) => void;
+export declare type EventListener = (...args: any[]) => void;
+export interface Emitter {
+    emit(type: string, ...args: any[]): void;
+    off: EmitterMethod;
+    on: EmitterMethod;
+    once: EmitterMethod;
+}
 export interface AppNode {
     readonly root: AppNode;
     readonly env: Dictionary;
     readonly volatile: Dictionary;
+    readonly events: Emitter;
     extend<T extends this>(plugin: (app: this) => T): T;
     extend<T extends ServiceDependencies>(services: T): Extended<this, T>;
 }

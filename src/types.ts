@@ -1,13 +1,13 @@
 export type JValue = string | number | boolean | JObject | JArray | null
 
 export interface JObject {
-  [key: string]: JValue;
+  [key: string]: JValue
 }
 
 export interface JArray extends Array<JValue> { }
 
 export interface Dictionary {
-  [key: string]: any;
+  [key: string]: any
 }
 
 export interface ServiceEnvFactory {
@@ -34,10 +34,22 @@ export type Instanced<T extends ServiceDependencies> = {
 
 export type Extended<T, U extends ServiceDependencies> = T & Instanced<U>
 
+export type EmitterMethod = (type: string, listener: EventListener) => void
+
+export type EventListener = (...args: any[]) => void
+
+export interface Emitter {
+  emit(type: string, ...args: any[]): void
+  off: EmitterMethod
+  on: EmitterMethod
+  once: EmitterMethod
+}
+
 export interface AppNode {
   readonly root: AppNode
   readonly env: Dictionary
   readonly volatile: Dictionary
+  readonly events: Emitter
   extend<T extends this>(plugin: (app: this) => T): T
   extend<T extends ServiceDependencies>(services: T): Extended<this, T>
 }

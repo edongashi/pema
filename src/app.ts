@@ -6,25 +6,33 @@ import {
   ServiceDependencies,
   ServiceConstructor,
   Extended,
-  ServiceEnv
+  ServiceEnv,
+  Emitter
 } from './types'
+import eventEmitter from 'event-emitter'
 import { toJS, runInAction } from 'mobx'
 
 class AppNodeImpl implements AppNode {
   private readonly __root: AppNodeImpl
   private readonly __state: JObject
-  private readonly __env: Dictionary
-  private readonly __volatile: Dictionary
+  private readonly __env?: Dictionary
+  private readonly __volatile?: Dictionary
+  private readonly __events?: Emitter
 
   constructor(
     root: AppNodeImpl | null = null,
     state: JObject = {},
     env: Dictionary = {},
     volatile: Dictionary = {}) {
-    this.__root = root || this
     this.__state = state
-    this.__env = env
-    this.__volatile = volatile
+    if (root) {
+      this.__root = root
+    } else {
+      this.__root = this
+      this.__env = env
+      this.__volatile = volatile
+      this.__events = eventEmitter()
+    }
   }
 
   get root(): AppNodeImpl {
@@ -32,11 +40,15 @@ class AppNodeImpl implements AppNode {
   }
 
   get env(): Dictionary {
-    return this.__root.__env
+    return this.__root.__env as Dictionary
   }
 
   get volatile(): Dictionary {
-    return this.__root.__volatile
+    return this.__root.__volatile as Dictionary
+  }
+
+  get events(): Emitter {
+    return this.__root.__events as Emitter
   }
 
   public toJSON(): JObject {
@@ -145,8 +157,8 @@ class AppNodeImpl implements AppNode {
       if (val instanceof AppNodeImpl) {
         result[key] = val.__serialize(context)
       } else if (val) {
-        if (typeof val.serialize === 'function') {
-          result[key] = val.serialize(context)
+        if (typeof val.toJSON === 'function') {
+          result[key] = val.toJSON(context)
         } else {
           result[key] = toJS(val) as JValue
         }
