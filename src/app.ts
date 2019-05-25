@@ -1,5 +1,4 @@
 import {
-  JValue,
   JObject,
   AppNode,
   Dictionary,
@@ -7,22 +6,22 @@ import {
   ServiceConstructor,
   Extended,
   ServiceEnv,
-  Emitter
+  Emitter,
+  AppEnv
 } from './types'
 import eventEmitter from 'event-emitter'
-import { toJS, runInAction } from 'mobx'
 
 class AppNodeImpl implements AppNode {
   private readonly __root: AppNodeImpl
   private readonly __state: JObject
-  private readonly __env?: Dictionary
+  private readonly __env?: AppEnv
   private readonly __volatile?: Dictionary
   private readonly __events?: Emitter
 
   constructor(
     root: AppNodeImpl | null = null,
     state: JObject = {},
-    env: Dictionary = {},
+    env: AppEnv = {},
     volatile: Dictionary = {}) {
     this.__state = state
     if (root) {
@@ -39,8 +38,8 @@ class AppNodeImpl implements AppNode {
     return this.__root
   }
 
-  get env(): Dictionary {
-    return this.__root.__env as Dictionary
+  get env(): AppEnv {
+    return this.__root.__env as AppEnv
   }
 
   get volatile(): Dictionary {
@@ -49,10 +48,6 @@ class AppNodeImpl implements AppNode {
 
   get events(): Emitter {
     return this.__root.__events as Emitter
-  }
-
-  public toJSON(): JObject {
-    return this.__serialize()
   }
 
   extend<T extends this>(plugin: (app: this) => T): T
@@ -117,11 +112,7 @@ class AppNodeImpl implements AppNode {
     }
   }
 
-  dispatch(event: Dictionary): void {
-    runInAction(() => this.__dispatch(event))
-  }
-
-  private __dispatch(action: Dictionary): void {
+  visit(visitor: ((service: any) => void)): void {
     for (const key in this) {
       if (key.indexOf('__') === 0) {
         continue
@@ -129,18 +120,39 @@ class AppNodeImpl implements AppNode {
 
       const val = this[key] as any
       if (val instanceof AppNodeImpl) {
-        val.__dispatch(action)
+        val.visit(visitor)
       } else if (val) {
         if (typeof val.handleEvent === 'function') {
-          val.handleEvent(action)
+          visitor(val)
         }
       }
     }
   }
 
+  emit(type: string, ...args: any[]) {
+    this.events.emit(type, ...args)
+  }
+
+  dispatch(method: string, ...args: any[]): void {
+    this.visit(node => {
+      if (node && typeof node[method] === 'function') {
+        node[method](...args)
+      }
+    })
+  }
+
+  dispose() {
+    this.dispatch('dispose')
+  }
+
+  toJSON(): JObject {
+    return this.__serialize()
+  }
+
   private __serialize(context?: any): JObject {
     const result: JObject = {}
     const state = this.__state
+    const serializer = this.env.defaultSerializer
     for (const key in state) {
       const val = state[key]
       if (val) {
@@ -159,8 +171,8 @@ class AppNodeImpl implements AppNode {
       } else if (val) {
         if (typeof val.toJSON === 'function') {
           result[key] = val.toJSON(context)
-        } else {
-          result[key] = toJS(val) as JValue
+        } else if (serializer) {
+          result[key] = serializer(val)
         }
       }
     }

@@ -45,13 +45,22 @@ export interface Emitter {
   once: EmitterMethod
 }
 
+export interface AppEnv extends Dictionary {
+  defaultSerializer?: (component: any) => JValue
+}
+
 export interface AppNode {
   readonly root: AppNode
-  readonly env: Dictionary
+  readonly env: AppEnv
   readonly volatile: Dictionary
   readonly events: Emitter
   extend<T extends this>(plugin: (app: this) => T): T
   extend<T extends ServiceDependencies>(services: T): Extended<this, T>
+  visit(visitor: ((service: any) => void)): void
+  emit(type: string, ...args: any[]): void
+  dispatch(method: string, ...args: any[]): void
+  dispose(): void
+  toJSON(): JObject
 }
 
 export interface DependencyGraph {
