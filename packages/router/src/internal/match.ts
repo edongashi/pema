@@ -23,7 +23,7 @@
  */
 
 import pathToRegexp, { Key } from 'path-to-regexp'
-import { Match, MatchedRoute, MatchOptions, RouteConfig } from './types'
+import { Match, MatchedRoute, MatchOptions, RouteConfig } from '../types'
 
 interface StringMap<TValue> {
   [key: string]: TValue

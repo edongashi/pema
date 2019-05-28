@@ -28,7 +28,7 @@ import {
   Dictionary
 } from '@pema/app'
 import throttle from 'lodash.throttle'
-import { resolveActions, toArray, noop, toHistoryLocation, fromHistoryLocation, locationsEqual } from './utils'
+import { resolveActions, toArray, noop, toHistoryLocation, fromHistoryLocation, locationsEqual } from './internal/utils'
 
 interface ViewSetter {
   (view: View): void
