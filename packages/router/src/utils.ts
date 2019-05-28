@@ -7,9 +7,8 @@ import {
   Location,
   ActionParams
 } from './types'
-import { invariant } from '@pema/app'
+import { invariant, JValue } from '@pema/app'
 import { Location as HistoryLocation } from 'history'
-import { JValue } from '@pema/app/lib/types'
 import { encode as b32encode, decode as b32decode } from 'hi-base32'
 import qs from 'qs'
 

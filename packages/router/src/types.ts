@@ -1,4 +1,4 @@
-import { JObject, JValue, AppNode } from '@pema/app/lib/types'
+import { JObject, JValue, AppNode } from '@pema/app'
 import { History } from 'history'
 
 export type PathTuple = [string, JObject?, JValue?, string?]

@@ -20,8 +20,13 @@ import {
   Location as HistoryLocation,
   Action as HistoryAction
 } from 'history'
-import { getProps, warning } from '@pema/app'
-import { JObject, AppNode, Dictionary } from '@pema/app/lib/types'
+import {
+  getProps,
+  warning,
+  JObject,
+  AppNode,
+  Dictionary
+} from '@pema/app'
 import throttle from 'lodash.throttle'
 import { resolveActions, toArray, noop, toHistoryLocation, fromHistoryLocation, locationsEqual } from './utils'
 

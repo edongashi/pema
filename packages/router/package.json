@@ -16,7 +16,8 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/edongashi/pema.git"
+    "url": "git+https://github.com/edongashi/pema.git",
+    "directory": "packages/router"
   },
   "scripts": {
     "tsc": "tsc",

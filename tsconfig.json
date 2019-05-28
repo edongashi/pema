@@ -4,17 +4,20 @@
     "declaration": true,
     "removeComments": true,
     "experimentalDecorators": true,
-    "baseUrl": ".",
     "target": "es6",
     "moduleResolution": "node",
     "strict": true,
+    "baseUrl": ".",
+    "paths":{
+      "@pema/*": ["packages/*"]
+    },
     "lib": [
       "es6"
     ],
     "allowSyntheticDefaultImports": true
   },
   "exclude": [
-    "node_modules",
+    "**/node_modules",
     "**/*.spec.ts"
   ]
 }
