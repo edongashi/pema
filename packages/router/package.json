@@ -1,6 +1,6 @@
 {
   "name": "@pema/router",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "> TODO: description",
   "author": "Edon Gashi <edon.gashi@uni-pr.edu>",
   "homepage": "https://github.com/edongashi/pema#readme",
@@ -27,12 +27,12 @@
     "url": "https://github.com/edongashi/pema/issues"
   },
   "dependencies": {
-    "@pema/app": "^0.0.0",
+    "@pema/app": "^0.1.0",
+    "hi-base32": "^0.5.0",
     "history": "^4.9.0",
     "lodash.throttle": "^4.1.1",
     "path-to-regexp": "^3.0.0",
-    "qs": "^6.7.0",
-    "hi-base32": "^0.5.0"
+    "qs": "^6.7.0"
   },
   "devDependencies": {
     "@types/history": "^4.7.2",
