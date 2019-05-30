@@ -95,6 +95,20 @@ export function tryDecode(str: string): {
   }
 }
 
+export function isOnlyHashChange(oldHref: string, newHref: string): boolean {
+  const [oldUrl, oldHash] = oldHref.split('#')
+  const [newUrl, newHash] = newHref.split('#')
+  if (newHash && oldUrl === newUrl && oldHash === newHash) {
+    return true
+  }
+
+  if (oldUrl !== newUrl) {
+    return false
+  }
+
+  return oldHash !== newHash
+}
+
 export function locationsEqual(l1: HistoryLocation, l2: HistoryLocation): boolean {
   return l1.pathname === l2.pathname && l1.search === l2.search && l1.hash === l2.hash
 }

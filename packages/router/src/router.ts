@@ -28,7 +28,15 @@ import {
   Dictionary
 } from '@pema/app'
 import throttle from 'lodash.throttle'
-import { resolveActions, toArray, noop, toHistoryLocation, fromHistoryLocation, locationsEqual } from './internal/utils'
+import {
+  resolveActions,
+  toArray,
+  noop,
+  toHistoryLocation,
+  fromHistoryLocation,
+  locationsEqual,
+  isOnlyHashChange
+} from './internal/utils'
 
 interface ViewSetter {
   (view: View): void
@@ -39,11 +47,11 @@ interface CachedParams {
   location: HistoryLocation
   action: 'PUSH' | 'REPLACE' | 'POP'
   params: ActionParams
-  state: RouterState
+  state: RouterState,
+  hashChangeOnly: boolean
 }
 
 class RouterImpl implements Router {
-  private locked: boolean = false
   private readonly app: AppNode
   private readonly routes: RouteCollection
   private readonly controllersPath: string
@@ -51,18 +59,19 @@ class RouterImpl implements Router {
   private readonly unblock: () => void
   private readonly unlisten: () => void
   private readonly viewSetter: ViewSetter
+
+  private readonly session: JObject
+  private routeState: JObject
+  private locked: boolean = false
   private cachedParams: CachedParams | null = null
+
   private get currentController(): Controller | null {
     return this.current && this.current.controller || null
   }
 
   private __setView(view: View): void {
     this.view = view
-    this.app.emit('router.view', {
-      view,
-      app: this.app,
-      router: this
-    })
+    this.app.emit('router.view', view)
   }
 
   private forceView(view: View): void {
@@ -75,23 +84,34 @@ class RouterImpl implements Router {
     this.__setView(view)
   }
 
+  private emitCurrent(previous: RouterState): void {
+    this.app.emit('router.current', this.current, previous)
+  }
+
   private computeParams(
     historyLocation: HistoryLocation,
     historyAction: HistoryAction,
-    deep = false) {
+    deep = false): CachedParams {
     const { route, match } = this.routes.match(historyLocation.pathname)
     let shallow = false
+    const current = this.current
     if (!deep) {
-      const current = this.current
       if (current && current.route) {
         shallow = current.route === route || !!route.name && current.route.name === route.name
       }
     }
 
     const location = fromHistoryLocation(historyLocation)
+    const href = this.history.createHref(historyLocation)
+    let hashChangeOnly = false
+    if (current) {
+      hashChangeOnly = isOnlyHashChange(current.href, href)
+    }
+
     const params: ActionParams = {
       action: historyAction,
       location,
+      href,
       match,
       route,
       shallow,
@@ -108,7 +128,8 @@ class RouterImpl implements Router {
       action: historyAction,
       location: { ...historyLocation },
       params,
-      state
+      state,
+      hashChangeOnly
     }
   }
 
@@ -216,10 +237,15 @@ class RouterImpl implements Router {
       return
     }
 
-    const cachedParams = this.computeParams(nextLocation, nextAction, deep)
-    const { params } = cachedParams
-    this.cachedParams = cachedParams
+    const cached = this.computeParams(nextLocation, nextAction, deep)
+    this.cachedParams = cached
+    if (cached.hashChangeOnly) {
+      callback(true)
+      return
+    }
+
     this.locked = true
+    const { params } = cached
     try {
       const controller = this.currentController
       if (controller && controller.beforeLeave) {
@@ -251,15 +277,22 @@ class RouterImpl implements Router {
     }
 
     let cached = this.cachedParams
+    this.cachedParams = null
     if (!cached || !locationsEqual(cached.location, historyLocation) || cached.action !== historyAction) {
       cached = this.computeParams(historyLocation, historyAction)
-      this.cachedParams = null
     }
 
     const { params, state } = cached
     const { route } = state
-
+    const previous = this.current
     this.current = state
+
+    if (cached.hashChangeOnly) {
+      this.scrollTo(state.href)
+      this.emitCurrent(previous)
+      return
+    }
+
     if (!route.onEnter) {
       warning(false, 'onEnter action is required for routes.')
       this.forceView(null)
@@ -289,21 +322,18 @@ class RouterImpl implements Router {
           return
       }
     } finally {
-      this.app.emit('router.location', {
-        current: state,
-        app: this.app,
-        router: this
-      })
-
       this.locked = false
+      this.emitCurrent(previous)
     }
   }
 
-  constructor(_: JObject, app: AppNode, env: RouterEnv) {
+  constructor(state: JObject, app: AppNode, env: RouterEnv) {
     const self = this
     this.app = app
     this.controllersPath = env.controllersPath || 'controllers'
     this.routes = env.routes
+    this.routeState = (state.routeState as JObject) || {}
+    this.session = (state.session as JObject) || {}
     const history = env.createHistory({
       ...getProps(app, env.historyProps),
       getUserConfirmation
@@ -353,10 +383,18 @@ class RouterImpl implements Router {
   replace(path: PathTuple): void
   replace(path: Path): void
   replace(path: Path): void {
+    if (this.locked) {
+      return
+    }
+
     this.history.replace(toHistoryLocation(path, this.history.location))
   }
 
-  refresh(deep = false): Promise<void> {
+  reload(deep = false): Promise<void> {
+    if (this.locked) {
+      return Promise.resolve()
+    }
+
     return new Promise((resolve, reject) => {
       const { location, action } = this.history
       this.beforeEnter(location, action, async (go: boolean) => {
@@ -374,11 +412,46 @@ class RouterImpl implements Router {
   }
 
   goBack(): void {
+    if (this.locked) {
+      return
+    }
+
     this.history.goBack()
   }
 
   goForward(): void {
+    if (this.locked) {
+      return
+    }
+
     this.history.goForward()
+  }
+
+  scrollTo(href: string): void {
+    const [, hash] = href.split('#')
+    if (typeof hash === 'undefined') {
+      return
+    }
+
+    if (hash === '' && typeof window !== 'undefined') {
+      window.scrollTo(0, 0)
+      return
+    }
+
+    if (typeof document === 'undefined') {
+      return
+    }
+
+    const idEl = document.getElementById(hash)
+    if (idEl) {
+      idEl.scrollIntoView()
+      return
+    }
+
+    const nameEl = document.getElementsByName(hash)[0]
+    if (nameEl) {
+      nameEl.scrollIntoView()
+    }
   }
 
   prefetch(path: string): Promise<void>
@@ -413,6 +486,13 @@ class RouterImpl implements Router {
   createHref(path: Path): string
   createHref(path: Path): string {
     return this.history.createHref(toHistoryLocation(path, this.history.location))
+  }
+
+  toJSON() {
+    return {
+      routeState: this.routeState || {},
+      session: this.session || {}
+    }
   }
 
   dispose() {

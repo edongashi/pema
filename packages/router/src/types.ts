@@ -100,6 +100,7 @@ export interface Location extends PathObject {
 export interface RouterStateBase {
   readonly action: 'PUSH' | 'REPLACE' | 'POP'
   readonly location: PathObject
+  readonly href: string
   readonly match: Match
   readonly route: NamedRouteConfig
 }
@@ -123,9 +124,10 @@ export interface Router {
   replace(path: string): void
   replace(path: PathObject): void
   replace(path: PathTuple): void
-  refresh(deep?: boolean): Promise<void>
+  reload(deep?: boolean): Promise<void>
   goBack(): void
   goForward(): void
+  scrollTo(href: string): void
   prefetch(path: string): Promise<void>
   prefetch(path: PathObject): Promise<void>
   prefetch(path: PathTuple): Promise<void>
