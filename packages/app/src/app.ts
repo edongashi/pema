@@ -10,6 +10,7 @@ import {
   AppEnv
 } from './types'
 import eventEmitter from 'event-emitter'
+import allOff from 'event-emitter/all-off'
 
 class AppNodeImpl implements AppNode {
   private readonly __root: AppNodeImpl
@@ -142,7 +143,8 @@ class AppNodeImpl implements AppNode {
   }
 
   dispose() {
-    this.dispatch('dispose')
+    this.root.dispatch('dispose')
+    allOff(this.events)
   }
 
   toJSON(): JObject {

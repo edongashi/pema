@@ -103,6 +103,8 @@ export interface RouterStateBase {
   readonly href: string
   readonly match: Match
   readonly route: NamedRouteConfig
+  readonly state: JObject
+  readonly session: JObject
 }
 
 export interface ActionParams extends RouterStateBase {

@@ -199,7 +199,10 @@ export function fromHistoryLocation(location: HistoryLocation): Location {
 
 export function noop() { }
 
-export async function resolveActions(arg: ActionParams, actions: DelayableAction<AnyAction> | DelayableAction<AnyAction>[], setFallbackView: (view: View) => void): Promise<AnyAction> {
+export async function resolveActions(
+  arg: ActionParams,
+  actions: DelayableAction<AnyAction> | DelayableAction<AnyAction>[],
+  setFallbackView: (view: View) => void): Promise<AnyAction> {
   if (!Array.isArray(actions)) {
     actions = [actions]
   }
