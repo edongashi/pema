@@ -177,7 +177,8 @@ class RouterImpl implements Router {
     this.__setView(view)
   }
 
-  private async enterController(ctor: ControllerConstructor, state: RouterState, params: ActionParams) {
+  private async enterController
+    (ctor: ControllerConstructor, state: RouterState, params: ActionParams): Promise<boolean> {
     const { app, controllersPath } = this
     const { route } = params
     const dict = app as Dictionary
@@ -195,7 +196,7 @@ class RouterImpl implements Router {
     if (!controller) {
       warning(false, `Controller for route '${route.name}' could not be instantiated.`)
       this.enterError(null) // todo
-      return
+      return true
     }
 
     (state as Dictionary).controller = controller
@@ -203,7 +204,7 @@ class RouterImpl implements Router {
     if (typeof controller.onEnter !== 'function') {
       warning(false, `Controller for route '${route.name}' has no entry action.`)
       this.enterError(null) // todo
-      return
+      return true
     }
 
     let result: DelayableAction<EnterAction>
@@ -213,7 +214,7 @@ class RouterImpl implements Router {
     } catch (e) {
       warning(false, `Controller for route '${route.name}' threw an error during entry.`)
       this.enterError(e)
-      return
+      return true
     }
 
     const controllerAction =
@@ -222,7 +223,7 @@ class RouterImpl implements Router {
     switch (controllerAction.type) {
       case 'view':
         this.enterView(controllerAction.view) // todo
-        return
+        return true
       case 'redirect':
         if (controllerAction.push) {
           this.push(controllerAction.path)
@@ -230,17 +231,17 @@ class RouterImpl implements Router {
           this.replace(controllerAction.path)
         }
 
-        return
+        return false
       case 'error':
         this.enterError(controllerAction.error)
-        return
+        return true
       case 'deny':
         this.enterView(null) // todo
-        return
+        return true
       default:
         warning(false, `Invalid result from '${route.name}' controller.`)
         this.enterView(null) // todo
-        return
+        return true
     }
   }
 
@@ -317,13 +318,17 @@ class RouterImpl implements Router {
     }
 
     this.locked = true
+    const action = await resolveActions(params, route.onEnter, this.viewSetter) as RouteAction
+    let shouldEmit = true
     try {
-      const action = await resolveActions(params, route.onEnter, this.viewSetter) as RouteAction
       switch (action.type) {
         case 'view':
           this.enterView(action.view)
+          this.locked = false
           return
         case 'redirect':
+          shouldEmit = false
+          this.locked = false
           if (action.push) {
             this.push(action.path)
           } else {
@@ -333,14 +338,21 @@ class RouterImpl implements Router {
           return
         case 'error':
           this.enterError(action.error)
+          this.locked = false
           return
         case 'controller':
-          await this.enterController(action.controller, state, params)
+          const ended = await this.enterController(action.controller, state, params)
+          shouldEmit = ended
+          this.locked = false
           return
       }
-    } finally {
+    } catch (e) {
+      // todo
       this.locked = false
-      this.emitCurrent(previous)
+    } finally {
+      if (shouldEmit) {
+        this.emitCurrent(previous)
+      }
     }
   }
 
