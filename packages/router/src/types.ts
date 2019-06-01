@@ -31,7 +31,7 @@ export type View = any
 
 export type ViewResult = { type: 'view', view: View, status?: number }
 export type RedirectResult = { type: 'redirect', path: Path, push?: boolean }
-export type ErrorResult = { type: 'error', error: any }
+export type ErrorResult = { type: 'error', code: number, data?: JValue }
 export type ControllerResult = { type: 'controller', controller: ControllerConstructor }
 export type AllowResult = { type: 'allow' }
 export type DenyResult = { type: 'deny' }

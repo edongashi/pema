@@ -13,7 +13,9 @@ import {
   EnterAction,
   ActionParams,
   ControllerConstructor,
-  RoutingTable
+  RoutingTable,
+  ViewResult,
+  ErrorResult
 } from './types'
 import {
   History,
@@ -38,6 +40,7 @@ import {
   isOnlyHashChange
 } from './internal/utils'
 import RouteCollection from './routecollection'
+import { error } from './actions'
 
 interface ViewSetter {
   (view: View): void
@@ -56,6 +59,10 @@ interface SessionType {
   [key: string]: JObject
 }
 
+const notFound = error(404)
+const forbidden = error(403)
+const internalError = error(500)
+
 class RouterImpl implements Router {
   private readonly app: AppNode
   private readonly routes: RouteCollection
@@ -73,7 +80,7 @@ class RouterImpl implements Router {
     return this.current && this.current.controller || null
   }
 
-  private __setView(view: View): void {
+  private __setView(view: ViewResult | ErrorResult | null): void {
     this.view = view
     this.app.emit('router.view', view)
   }
@@ -101,8 +108,8 @@ class RouterImpl implements Router {
         return true
       case 'error':
         callback(false)
+        this.enterError(result)
         this.locked = false
-        this.enterError(result.error) // todo
         return true
       default:
         return false
@@ -170,12 +177,12 @@ class RouterImpl implements Router {
     }
   }
 
-  private enterView(view: View): void {
+  private enterView(view: ViewResult): void {
     this.viewSetter.cancel()
     this.__setView(view)
   }
 
-  private enterError(view: View): void {
+  private enterError(view: ErrorResult): void {
     this.viewSetter.cancel()
     this.__setView(view)
   }
@@ -198,7 +205,7 @@ class RouterImpl implements Router {
 
     if (!controller) {
       warning(false, `Controller for route '${route.id}' could not be instantiated.`)
-      this.enterError(null) // todo
+      this.enterError(notFound)
       return true
     }
 
@@ -206,7 +213,7 @@ class RouterImpl implements Router {
 
     if (typeof controller.onEnter !== 'function') {
       warning(false, `Controller for route '${route.id}' has no entry action.`)
-      this.enterError(null) // todo
+      this.enterError(notFound)
       return true
     }
 
@@ -216,7 +223,7 @@ class RouterImpl implements Router {
       warning(result, `Controller for route '${route.id}' has no entry action.`)
     } catch (e) {
       warning(false, `Controller for route '${route.id}' threw an error during entry.`)
-      this.enterError(e)
+      this.enterError(internalError)
       return true
     }
 
@@ -225,7 +232,7 @@ class RouterImpl implements Router {
 
     switch (controllerAction.type) {
       case 'view':
-        this.enterView(controllerAction.view) // todo
+        this.enterView(controllerAction)
         return true
       case 'redirect':
         if (controllerAction.push) {
@@ -236,14 +243,14 @@ class RouterImpl implements Router {
 
         return false
       case 'error':
-        this.enterError(controllerAction.error)
+        this.enterError(controllerAction)
         return true
       case 'deny':
-        this.enterView(null) // todo
+        this.enterError(forbidden)
         return true
       default:
         warning(false, `Invalid result from '${route.id}' controller.`)
-        this.enterView(null) // todo
+        this.enterError(notFound)
         return true
     }
   }
@@ -324,7 +331,7 @@ class RouterImpl implements Router {
 
     if (!route.onEnter) {
       warning(false, 'onEnter action is required for routes.')
-      this.enterView(null)
+      this.enterError(notFound)
       return
     }
 
@@ -334,7 +341,7 @@ class RouterImpl implements Router {
     try {
       switch (action.type) {
         case 'view':
-          this.enterView(action.view)
+          this.enterView(action)
           this.locked = false
           return
         case 'redirect':
@@ -348,7 +355,7 @@ class RouterImpl implements Router {
 
           return
         case 'error':
-          this.enterError(action.error)
+          this.enterError(action)
           this.locked = false
           return
         case 'controller':
@@ -358,7 +365,6 @@ class RouterImpl implements Router {
           return
       }
     } catch (e) {
-      // todo
       this.locked = false
     } finally {
       if (shouldEmit) {
@@ -369,6 +375,7 @@ class RouterImpl implements Router {
 
   constructor(state: JObject, app: AppNode, env: RouterEnv) {
     const self = this
+    this.view = null
     this.app = app
     this.controllersPath = env.controllersPath || 'controllers'
     this.routes = new RouteCollection(env.routes)
@@ -409,7 +416,7 @@ class RouterImpl implements Router {
     }
   }
 
-  view: View
+  view: ViewResult | ErrorResult | null
   current: RouterState
 
   push(path: string): void

@@ -13,6 +13,7 @@ import {
   LazyResolver,
   ErrorResult
 } from './types'
+import { JValue } from '@pema/app'
 
 export function delay<T>
   (p: Delayed<T>, fallback?: View): DelayedResult<T> {
@@ -38,10 +39,11 @@ export function view(view: View): ViewResult {
   }
 }
 
-export function error(error: any): ErrorResult {
+export function error(code: number, data?: JValue): ErrorResult {
   return {
     type: 'error',
-    error
+    code,
+    data
   }
 }
 
