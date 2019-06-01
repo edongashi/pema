@@ -69,20 +69,6 @@ export type AnyAction = EnterAction | TransitionAction | RouteAction
 export type DelayableAction<T extends AnyAction>
   = T | DelayedResult<T> | LazyResult<T>
 
-export interface RouteConfig {
-  path: string
-  exact?: boolean
-  strict?: boolean
-  routes?: RouteConfig[]
-  beforeEnter?: DelayableAction<TransitionAction> | DelayableAction<TransitionAction>[]
-  onEnter: DelayableAction<RouteAction> | DelayableAction<RouteAction>[]
-  [propName: string]: any
-}
-
-export interface NamedRouteConfig extends RouteConfig {
-  name: string
-}
-
 export interface Controller {
   onEnter(params: ActionParams): DelayableAction<EnterAction>
   onShallowEnter?(params: ActionParams): DelayableAction<TransitionAction>
@@ -102,7 +88,7 @@ export interface RouterStateBase {
   readonly location: PathObject
   readonly href: string
   readonly match: Match
-  readonly route: NamedRouteConfig
+  readonly route: KeyedRouteConfig
   readonly state: JObject
   readonly session: JObject
 }
@@ -136,7 +122,28 @@ export interface Router {
   createHref(path: string): string
   createHref(path: PathObject): string
   createHref(path: PathTuple): string
+  registerRoutes(routes: RoutingTable): void
   dispose(): void
+}
+
+export interface RoutingTable {
+  [key: string]: RouteConfig
+}
+
+export interface RouteConfig {
+  exact?: boolean
+  strict?: boolean
+  sensitive?: boolean
+  order?: number
+  stateless?: boolean
+  beforeEnter?: DelayableAction<TransitionAction> | DelayableAction<TransitionAction>[]
+  onEnter: DelayableAction<RouteAction> | DelayableAction<RouteAction>[]
+  [propName: string]: any
+}
+
+export interface KeyedRouteConfig extends RouteConfig {
+  id: string
+  path: string
 }
 
 export interface MatchOptions {
@@ -147,16 +154,8 @@ export interface MatchOptions {
 }
 
 export interface MatchedRoute {
-  route: RouteConfig
+  route: KeyedRouteConfig
   match: Match
-}
-
-export interface NamedMatchedRoute extends MatchedRoute {
-  route: NamedRouteConfig
-}
-
-export interface RouteCollection {
-  match(path: string): NamedMatchedRoute
 }
 
 export interface HistoryBuildOptions {
@@ -166,7 +165,7 @@ export interface HistoryBuildOptions {
 }
 
 export interface RouterEnv {
-  routes: RouteCollection
+  routes: RoutingTable
   createHistory: (options: HistoryBuildOptions) => History
   historyProps?: HistoryBuildOptions
   controllersPath?: string

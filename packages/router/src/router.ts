@@ -5,7 +5,6 @@ import {
   PathTuple,
   Path,
   Controller,
-  RouteCollection,
   View,
   AnyAction,
   RouterEnv,
@@ -13,7 +12,8 @@ import {
   DelayableAction,
   EnterAction,
   ActionParams,
-  ControllerConstructor
+  ControllerConstructor,
+  RoutingTable
 } from './types'
 import {
   History,
@@ -37,6 +37,7 @@ import {
   locationsEqual,
   isOnlyHashChange
 } from './internal/utils'
+import RouteCollection from './routecollection'
 
 interface ViewSetter {
   (view: View): void
@@ -117,7 +118,7 @@ class RouterImpl implements Router {
     const current = this.current
     if (!deep) {
       if (current && current.route) {
-        shallow = current.route === route || !!route.name && current.route.name === route.name
+        shallow = current.route === route || !!route.id && current.route.id === route.id
       }
     }
 
@@ -127,17 +128,19 @@ class RouterImpl implements Router {
     let routeState = {}
     if (!deep && current) {
       hashChangeOnly = isOnlyHashChange(current.href, href)
-      if (shallow) {
+      if (shallow && !route.stateless) {
         routeState = current.state
       }
     }
 
     let session: JObject
-    if (route.name in this.session) {
-      session = this.session[route.name]
+    if (route.id in this.session) {
+      session = this.session[route.id]
     } else {
       session = {}
-      this.session[route.name] = session
+      if (!route.stateless) {
+        this.session[route.id] = session
+      }
     }
 
     const params: ActionParams = {
@@ -182,19 +185,19 @@ class RouterImpl implements Router {
     const { app, controllersPath } = this
     const { route } = params
     const dict = app as Dictionary
-    let controller: Controller = dict[controllersPath] && dict[controllersPath][route.name]
+    let controller: Controller = dict[controllersPath] && dict[controllersPath][route.id]
     if (!controller && ctor) {
       app.extend({
         [controllersPath]: {
-          [route.name]: ctor
+          [route.id]: ctor
         }
       })
 
-      controller = dict[controllersPath] && dict[controllersPath][route.name]
+      controller = dict[controllersPath] && dict[controllersPath][route.id]
     }
 
     if (!controller) {
-      warning(false, `Controller for route '${route.name}' could not be instantiated.`)
+      warning(false, `Controller for route '${route.id}' could not be instantiated.`)
       this.enterError(null) // todo
       return true
     }
@@ -202,7 +205,7 @@ class RouterImpl implements Router {
     (state as Dictionary).controller = controller
 
     if (typeof controller.onEnter !== 'function') {
-      warning(false, `Controller for route '${route.name}' has no entry action.`)
+      warning(false, `Controller for route '${route.id}' has no entry action.`)
       this.enterError(null) // todo
       return true
     }
@@ -210,9 +213,9 @@ class RouterImpl implements Router {
     let result: DelayableAction<EnterAction>
     try {
       result = await controller.onEnter(params)
-      warning(result, `Controller for route '${route.name}' has no entry action.`)
+      warning(result, `Controller for route '${route.id}' has no entry action.`)
     } catch (e) {
-      warning(false, `Controller for route '${route.name}' threw an error during entry.`)
+      warning(false, `Controller for route '${route.id}' threw an error during entry.`)
       this.enterError(e)
       return true
     }
@@ -239,7 +242,7 @@ class RouterImpl implements Router {
         this.enterView(null) // todo
         return true
       default:
-        warning(false, `Invalid result from '${route.name}' controller.`)
+        warning(false, `Invalid result from '${route.id}' controller.`)
         this.enterView(null) // todo
         return true
     }
@@ -360,7 +363,7 @@ class RouterImpl implements Router {
     const self = this
     this.app = app
     this.controllersPath = env.controllersPath || 'controllers'
-    this.routes = env.routes
+    this.routes = new RouteCollection(env.routes)
     this.session = (state.session as SessionType) || {}
     const history = env.createHistory({
       ...getProps(app, env.historyProps),
@@ -526,9 +529,18 @@ class RouterImpl implements Router {
     return this.history.createHref(toHistoryLocation(path, this.history.location))
   }
 
-  toJSON() {
+  registerRoutes(routes: RoutingTable): void {
+    this.routes.registerRoutes(routes)
+  }
+
+  toJSON(): JObject {
+    const { current } = this
+    if (current.route && current.route.stateless) {
+      return {}
+    }
+
     return {
-      state: this.current.state || {},
+      state: current.state || {},
       session: this.session || {}
     }
   }

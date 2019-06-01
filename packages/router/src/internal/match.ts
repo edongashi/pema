@@ -23,7 +23,7 @@
  */
 
 import pathToRegexp, { Key } from 'path-to-regexp'
-import { Match, MatchedRoute, MatchOptions, RouteConfig } from '../types'
+import { Match, MatchedRoute, MatchOptions, KeyedRouteConfig } from '../types'
 
 interface StringMap<TValue> {
   [key: string]: TValue
@@ -117,30 +117,21 @@ function matchPath(pathname: string, arg: string | MatchOptions): Match | null {
   }, null)
 }
 
-function computeRootMatch(pathname: string) {
+export function computeRootMatch(pathname: string): Match {
   return { path: '/', url: '/', params: {}, isExact: pathname === '/' }
 }
 
-export function matchRoutes(
-  routes: RouteConfig[],
-  pathname: string,
-  branch: MatchedRoute[] = []): MatchedRoute[] {
-  routes.some(route => {
-    const match = route.path
-      ? matchPath(pathname, route)
-      : branch.length
-        ? branch[branch.length - 1].match // use parent match
-        : computeRootMatch(pathname) // use default 'root' match
-
+export function matchRoute(
+  routes: KeyedRouteConfig[],
+  pathname: string): MatchedRoute | null {
+  const len = routes.length
+  for (let i = 0; i < len; i++) {
+    const route = routes[i]
+    const match = matchPath(pathname, route)
     if (match) {
-      branch.push({ route, match })
-      if (route.routes) {
-        matchRoutes(route.routes, pathname, branch)
-      }
+      return { route, match }
     }
+  }
 
-    return !!match
-  })
-
-  return branch
+  return null
 }

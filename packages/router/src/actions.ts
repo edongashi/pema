@@ -10,7 +10,8 @@ import {
   View,
   ViewResult,
   LazyResult,
-  LazyResolver
+  LazyResolver,
+  ErrorResult
 } from './types'
 
 export function delay<T>
@@ -34,6 +35,13 @@ export function view(view: View): ViewResult {
   return {
     type: 'view',
     view
+  }
+}
+
+export function error(error: any): ErrorResult {
+  return {
+    type: 'error',
+    error
   }
 }
 
