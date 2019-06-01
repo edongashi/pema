@@ -314,6 +314,14 @@ class RouterImpl implements Router {
       return
     }
 
+    if (!params.shallow && previous.controller && previous.controller.onLeave) {
+      try {
+        previous.controller.onLeave(params)
+      } catch (e) {
+        warning(false, `Controller for route '${previous.route.id}' threw an error during exit.`)
+      }
+    }
+
     if (!route.onEnter) {
       warning(false, 'onEnter action is required for routes.')
       this.enterView(null)

@@ -73,6 +73,7 @@ export interface Controller {
   onEnter(params: ActionParams): DelayableAction<EnterAction>
   onShallowEnter?(params: ActionParams): DelayableAction<TransitionAction>
   beforeLeave?(params: ActionParams): DelayableAction<TransitionAction>
+  onLeave?(params: ActionParams): void
 }
 
 export interface Location extends PathObject {
