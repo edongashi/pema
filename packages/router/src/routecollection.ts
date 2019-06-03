@@ -32,7 +32,11 @@ export default class RouteCollection {
     for (let i = 0; i < len; i++) {
       const path = paths[i]
       const route = routes[path]
-      const id = (route.exact ? 'e' : '') + (route.strict ? 's' : '') + '@' + path
+      const id =
+        (route.exact ? 'e' : '')
+        + (route.strict ? 's' : '')
+        + (route.sensitive ? 'v' : '')
+        + '@' + path
       routesArray.push({
         ...route,
         id,
