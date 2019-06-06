@@ -143,7 +143,7 @@ export interface Router {
 }
 
 export interface RoutingTable {
-  [key: string]: RouteConfig | DelayableAction<RouteAction>
+  [key: string]: RouteConfig
 }
 
 export interface RouteConfig {
