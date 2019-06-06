@@ -1,14 +1,4 @@
-export type JValue = string | number | boolean | JObject | JArray | null
-
-export interface JObject {
-  [key: string]: JValue
-}
-
-export interface JArray extends Array<JValue> { }
-
-export interface Dictionary {
-  [key: string]: any
-}
+import { Dictionary, JValue, JObject } from '@pema/utils'
 
 export interface ServiceEnvFactory {
   (app: any): Dictionary

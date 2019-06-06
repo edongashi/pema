@@ -18,29 +18,29 @@ import {
   ErrorResult
 } from './types'
 import {
+  toArray,
+  noop,
+  buildProps,
+  warning,
+  JObject,
+  Dictionary
+} from '@pema/utils'
+import { AppNode } from '@pema/app'
+import {
   History,
   Location as HistoryLocation,
   Action as HistoryAction
 } from 'history'
-import {
-  getProps,
-  warning,
-  JObject,
-  AppNode,
-  Dictionary
-} from '@pema/app'
 import throttle from 'lodash.throttle'
 import {
-  resolveActions,
-  toArray,
-  noop,
   toHistoryLocation,
   fromHistoryLocation,
   locationsEqual,
   isOnlyHashChange
-} from './internal/utils'
-import RouteCollection from './routecollection'
+} from './url-utils'
+import RouteCollection from './route-collection'
 import { error } from './actions'
+import resolveActions from './resolve-actions';
 
 interface ViewSetter {
   (view: View): void
@@ -120,7 +120,8 @@ class RouterImpl implements Router {
     historyLocation: HistoryLocation,
     historyAction: HistoryAction,
     deep = false): CachedParams {
-    const { route, match } = this.routes.match(historyLocation.pathname)
+    const branch = this.routes.match(historyLocation.pathname)
+    const { route, match } = branch[branch.length - 1]
     let shallow = false
     const current = this.current
     if (!deep) {
@@ -156,6 +157,7 @@ class RouterImpl implements Router {
       href,
       match,
       route,
+      branch,
       shallow,
       state: routeState,
       session,
@@ -381,7 +383,7 @@ class RouterImpl implements Router {
     this.routes = new RouteCollection(env.routes)
     this.session = (state.session as SessionType) || {}
     const history = env.createHistory({
-      ...getProps(app, env.historyProps),
+      ...buildProps(app, env.historyProps),
       getUserConfirmation
     })
 
@@ -516,12 +518,12 @@ class RouterImpl implements Router {
   prefetch(path: Path): Promise<void>
   prefetch(path: Path): Promise<void> {
     const { pathname } = toHistoryLocation(path, this.history.location)
-    const match = this.routes.match(pathname)
-    if (!match) {
+    const branch = this.routes.match(pathname)
+    if (!branch || branch.length === 0) {
       return Promise.resolve()
     }
 
-    const route = match.route
+    const { route } = branch[branch.length - 1]
     const promises =
       toArray<DelayableAction<AnyAction>>(route.beforeEnter)
         .concat(toArray(route.onEnter))

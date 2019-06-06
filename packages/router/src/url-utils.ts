@@ -1,13 +1,5 @@
-import {
-  View,
-  Delayed,
-  DelayableAction,
-  AnyAction,
-  Path,
-  Location,
-  ActionParams
-} from '../types'
-import { invariant, warning, JValue, JObject } from '@pema/app'
+import { Path, Location } from './types'
+import { warning, JValue, JObject } from '@pema/utils'
 import { Location as HistoryLocation } from 'history'
 import { parsePath } from 'history/PathUtils'
 import { createLocation } from 'history/LocationUtils'
@@ -197,82 +189,14 @@ export function fromHistoryLocation(location: HistoryLocation): Location {
   }
 }
 
-export function noop() { }
-
-export async function resolveActions(
-  arg: ActionParams,
-  actions: DelayableAction<AnyAction> | DelayableAction<AnyAction>[],
-  setFallbackView: (view: View) => void): Promise<AnyAction> {
-  if (!Array.isArray(actions)) {
-    actions = [actions]
+export function join(path1: string, path2: string): string {
+  if (path2[0] === '/') {
+    path2 = path2.substr(1)
   }
 
-  async function resolveDelayed<T>(value: Delayed<T>, fallback: View | undefined): Promise<T> {
-    const v = value as any
-    if (!v) {
-      return v
-    }
-
-    if (typeof v.then === 'function') {
-      if (typeof fallback !== 'undefined') {
-        setFallbackView(fallback)
-      }
-
-      return await v
-    }
-
-    const promise = v(arg)
-    if (promise && typeof promise.then === 'function') {
-      if (typeof fallback !== 'undefined') {
-        setFallbackView(fallback)
-      }
-
-      return await promise
-    } else {
-      return promise
-    }
-  }
-
-  for (let i = 0; i < actions.length; i++) {
-    let action = actions[i]
-    if (action.type === 'lazy') {
-      if (typeof action.fallback !== 'undefined') {
-        setFallbackView(action.fallback)
-      }
-
-      try {
-        action = await action.value()
-      } catch (e) {
-        return { type: 'error', error: e }
-      }
-    }
-
-    let resolvedAction: AnyAction
-    if (action.type === 'delay') {
-      try {
-        resolvedAction = await resolveDelayed(action.value, action.fallback)
-      } catch (e) {
-        return { type: 'error', error: e }
-      }
-    } else {
-      invariant((action as any).type !== 'lazy', 'Cannot resolve a delayed lazy result.')
-      resolvedAction = action
-    }
-
-    if (resolvedAction && resolvedAction.type !== 'allow') {
-      return resolvedAction
-    }
-  }
-
-  return { type: 'allow' }
-}
-
-export function toArray<T>(arg?: T | T[]): T[] {
-  if (Array.isArray(arg)) {
-    return arg
-  } else if (typeof arg !== 'undefined') {
-    return [arg]
+  if (path1[path1.length - 1] === '/') {
+    return path1 + path2
   } else {
-    return []
+    return path1 + '/' + path2
   }
 }

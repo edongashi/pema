@@ -1,21 +1,4 @@
-import { AppNode, Dictionary } from "./types";
-
-export function getProps(
-  app: AppNode,
-  props?: Function | Dictionary,
-  clone = true): Dictionary {
-  if (props && typeof props === 'object') {
-    return clone ? { ...props } : props
-  }
-
-  if (typeof props === 'function') {
-    return props(app) || {}
-  }
-
-  return {}
-}
-
-const isProduction: boolean = process.env.NODE_ENV === 'production';
+const isProduction: boolean = process.env.NODE_ENV === 'production'
 
 export function warning(condition: any, message: string) {
   if (!isProduction) {

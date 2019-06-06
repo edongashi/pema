@@ -1,4 +1,5 @@
-import { JObject, JValue, AppNode } from '@pema/app'
+import { AppNode } from '@pema/app'
+import { JObject, JValue } from '@pema/utils'
 import { History } from 'history'
 
 export type PathTuple = [string, JObject?, JValue?, string?]
@@ -31,7 +32,7 @@ export type View = any
 
 export type ViewResult = { type: 'view', view: View, status?: number }
 export type RedirectResult = { type: 'redirect', path: Path, push?: boolean }
-export type ErrorResult = { type: 'error', code: number, data?: JValue }
+export type ErrorResult = { type: 'error', code: number, error?: JValue }
 export type ControllerResult = { type: 'controller', controller: ControllerConstructor }
 export type AllowResult = { type: 'allow' }
 export type DenyResult = { type: 'deny' }
@@ -90,6 +91,7 @@ export interface RouterStateBase {
   readonly href: string
   readonly match: Match
   readonly route: KeyedRouteConfig
+  readonly branch: MatchedRoute[]
   readonly state: JObject
   readonly session: JObject
 }
@@ -137,6 +139,7 @@ export interface RouteConfig {
   sensitive?: boolean
   order?: number
   stateless?: boolean
+  routes?: RoutingTable
   beforeEnter?: DelayableAction<TransitionAction> | DelayableAction<TransitionAction>[]
   onEnter: DelayableAction<RouteAction> | DelayableAction<RouteAction>[]
   [propName: string]: any
@@ -145,6 +148,7 @@ export interface RouteConfig {
 export interface KeyedRouteConfig extends RouteConfig {
   id: string
   path: string
+  keyedRoutes?: KeyedRouteConfig[]
 }
 
 export interface MatchOptions {

@@ -1,7 +1,6 @@
+import { JObject, Dictionary } from '@pema/utils'
 import {
-  JObject,
   AppNode,
-  Dictionary,
   ServiceDependencies,
   ServiceConstructor,
   Extended,

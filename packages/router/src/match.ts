@@ -22,19 +22,21 @@
  * SOFTWARE.
  */
 
+import {
+  Match,
+  MatchedRoute,
+  MatchOptions,
+  KeyedRouteConfig
+} from './types'
 import pathToRegexp, { Key } from 'path-to-regexp'
-import { Match, MatchedRoute, MatchOptions, KeyedRouteConfig } from '../types'
-
-interface StringMap<TValue> {
-  [key: string]: TValue
-}
+import { Dictionary } from '@pema/utils'
 
 interface CompiledRegexp {
   regexp: RegExp,
   keys: Key[]
 }
 
-const cache: StringMap<StringMap<CompiledRegexp>> = {}
+const cache: Dictionary<Dictionary<CompiledRegexp>> = {}
 const cacheLimit = 10000
 let cacheCount = 0
 
@@ -109,7 +111,7 @@ function matchPath(pathname: string, arg: string | MatchOptions): Match | null {
       path, // the path used to match
       url: path === '/' && url === '' ? '/' : url, // the matched portion of the URL
       isExact, // whether or not we matched exactly
-      params: keys.reduce((memo: StringMap<string>, key, index) => {
+      params: keys.reduce((memo: Dictionary<string>, key, index) => {
         memo[key.name] = values[index]
         return memo
       }, {})
@@ -121,17 +123,23 @@ export function computeRootMatch(pathname: string): Match {
   return { path: '/', url: '/', params: {}, isExact: pathname === '/' }
 }
 
-export function matchRoute(
+export function matchRoutes(
   routes: KeyedRouteConfig[],
-  pathname: string): MatchedRoute | null {
+  pathname: string,
+  branch: MatchedRoute[] = []): MatchedRoute[] {
   const len = routes.length
   for (let i = 0; i < len; i++) {
     const route = routes[i]
     const match = matchPath(pathname, route)
     if (match) {
-      return { route, match }
+      branch.push({ route, match })
+      if (route.keyedRoutes) {
+        matchRoutes(route.keyedRoutes, pathname, branch)
+      }
+
+      break
     }
   }
 
-  return null
+  return branch
 }

@@ -1,3 +1,3 @@
 export * from './actions'
 export * from './router'
-export { encode, decode, tryDecode } from './internal/utils'
+export { encode, decode, tryDecode } from './url-utils'
