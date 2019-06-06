@@ -18,6 +18,7 @@ import { ErrorObject, serializeError } from '@pema/utils'
 export function delay<T>
   (p: Delayed<T>, fallback?: View): DelayedResult<T> {
   return {
+    __result: true,
     type: 'delay',
     value: p,
     fallback
@@ -26,6 +27,7 @@ export function delay<T>
 
 export function lazy<T>(fn: LazyResolver<T>, fallback?: View): LazyResult<T> {
   return {
+    __result: true,
     type: 'lazy',
     value: fn,
     fallback
@@ -34,6 +36,7 @@ export function lazy<T>(fn: LazyResolver<T>, fallback?: View): LazyResult<T> {
 
 export function view(view: View): ViewResult {
   return {
+    __result: true,
     type: 'view',
     view
   }
@@ -41,6 +44,7 @@ export function view(view: View): ViewResult {
 
 export function error(code: number, error?: ErrorObject | string): ErrorResult {
   return {
+    __result: true,
     type: 'error',
     code,
     error: error ? serializeError(error) : null
@@ -49,6 +53,7 @@ export function error(code: number, error?: ErrorObject | string): ErrorResult {
 
 export function redirect(path: Path): RedirectResult {
   return {
+    __result: true,
     type: 'redirect',
     path
   }
@@ -56,15 +61,22 @@ export function redirect(path: Path): RedirectResult {
 
 export function controller<T extends ControllerConstructor>(ctor: T): ControllerResult {
   return {
+    __result: true,
     type: 'controller',
     controller: ctor
   }
 }
 
 export function allow(): AllowResult {
-  return { type: 'allow' }
+  return {
+    __result: true,
+    type: 'allow'
+  }
 }
 
 export function deny(): DenyResult {
-  return { type: 'deny' }
+  return {
+    __result: true,
+    type: 'deny'
+  }
 }

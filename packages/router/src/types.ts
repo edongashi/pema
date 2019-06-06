@@ -30,12 +30,35 @@ export interface ControllerConstructor {
 
 export type View = any
 
-export type ViewResult = { type: 'view', view: View, status?: number }
-export type RedirectResult = { type: 'redirect', path: Path, push?: boolean }
-export type ErrorResult = { type: 'error', code: number, error?: JValue }
-export type ControllerResult = { type: 'controller', controller: ControllerConstructor }
-export type AllowResult = { type: 'allow' }
-export type DenyResult = { type: 'deny' }
+export type Delayed<T> = Promise<T> | ((params: ActionParams) => T) | ((arg: ActionParams) => Promise<T>)
+
+export type LazyResolver<T> = () => Promise<T | DelayedResult<T>>
+
+type IsResult = { __result: true }
+
+export type ViewResult
+  = IsResult & { type: 'view', view: View, status?: number }
+
+export type RedirectResult
+  = IsResult & { type: 'redirect', path: Path, push?: boolean }
+
+export type ErrorResult
+  = IsResult & { type: 'error', code: number, error?: JValue }
+
+export type ControllerResult
+  = IsResult & { type: 'controller', controller: ControllerConstructor }
+
+export type AllowResult
+  = IsResult & { type: 'allow' }
+
+export type DenyResult
+  = IsResult & { type: 'deny' }
+
+export type DelayedResult<T>
+  = IsResult & { type: 'delay', value: Delayed<T>, fallback?: View }
+
+export type LazyResult<T>
+  = IsResult & { type: 'lazy', value: LazyResolver<T>, fallback?: View }
 
 export type EnterAction =
   | DenyResult
@@ -54,16 +77,6 @@ export type RouteAction =
   | RedirectResult
   | ControllerResult
   | ErrorResult
-
-export type Delayed<T> = Promise<T> | ((params: ActionParams) => T) | ((arg: ActionParams) => Promise<T>)
-
-export type DelayedResult<T>
-  = { type: 'delay', value: Delayed<T>, fallback?: View }
-
-export type LazyResolver<T> = () => Promise<T | DelayedResult<T>>
-
-export type LazyResult<T>
-  = { type: 'lazy', value: LazyResolver<T>, fallback?: View }
 
 export type AnyAction = EnterAction | TransitionAction | RouteAction
 
@@ -130,7 +143,7 @@ export interface Router {
 }
 
 export interface RoutingTable {
-  [key: string]: RouteConfig
+  [key: string]: RouteConfig | DelayableAction<RouteAction>
 }
 
 export interface RouteConfig {

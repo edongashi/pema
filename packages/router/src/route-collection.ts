@@ -2,7 +2,10 @@ import {
   KeyedRouteConfig,
   MatchedRoute,
   RoutingTable,
-  RouteConfig
+  RouteConfig,
+  DelayableAction,
+  AnyAction,
+  RouteAction
 } from './types'
 import sortBy from 'lodash.sortby'
 import { matchRoutes, computeRootMatch } from './match'
@@ -21,21 +24,39 @@ function flattenRoutes(path: string, routes: RoutingTable) {
   return sortBy(childRoutes, r => r.order || 0)
 }
 
-function toKeyedRoute(path: string, route: RouteConfig): KeyedRouteConfig {
+function toKeyedRoute(path: string, route: RouteConfig | DelayableAction<RouteAction>): KeyedRouteConfig {
+  let config: RouteConfig
+  if (typeof route === 'function') {
+    config = { onEnter: route }
+  } else if (route.__result) {
+    const result = route as AnyAction
+    switch (result.type) {
+      case 'redirect':
+      case 'deny':
+        config = { beforeEnter: result }
+        break
+      default:
+        config = { onEnter: result as RouteAction }
+        break
+    }
+  } else {
+    config = route || {}
+  }
+
   const id =
-    (route.exact ? 'e' : '')
-    + (route.strict ? 's' : '')
-    + (route.sensitive ? 'v' : '')
+    (config.exact ? 'e' : '')
+    + (config.strict ? 's' : '')
+    + (config.sensitive ? 'v' : '')
     + '@' + path
 
   const result: KeyedRouteConfig = {
-    ...route,
+    ...config,
     id,
     path
   }
 
-  if (route.routes) {
-    result.keyedRoutes = flattenRoutes(path, route.routes)
+  if (config.routes) {
+    result.keyedRoutes = flattenRoutes(path, config.routes)
   }
 
   return result
