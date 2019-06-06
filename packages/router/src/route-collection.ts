@@ -28,7 +28,7 @@ function toKeyedRoute(path: string, route: RouteConfig | DelayableAction<RouteAc
   let config: RouteConfig
   if (typeof route === 'function') {
     config = { onEnter: route }
-  } else if (route.__result) {
+  } else if (route.__result || Array.isArray(route)) {
     config = { onEnter: route as RouteAction }
   } else {
     config = route || {}
