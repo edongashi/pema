@@ -141,7 +141,7 @@ export interface RouteConfig {
   stateless?: boolean
   routes?: RoutingTable
   beforeEnter?: DelayableAction<TransitionAction> | DelayableAction<TransitionAction>[]
-  onEnter: DelayableAction<RouteAction> | DelayableAction<RouteAction>[]
+  onEnter?: DelayableAction<RouteAction> | DelayableAction<RouteAction>[]
   [propName: string]: any
 }
 
