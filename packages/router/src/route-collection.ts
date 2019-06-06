@@ -29,16 +29,7 @@ function toKeyedRoute(path: string, route: RouteConfig | DelayableAction<RouteAc
   if (typeof route === 'function') {
     config = { onEnter: route }
   } else if (route.__result) {
-    const result = route as AnyAction
-    switch (result.type) {
-      case 'redirect':
-      case 'deny':
-        config = { beforeEnter: result }
-        break
-      default:
-        config = { onEnter: result as RouteAction }
-        break
-    }
+    config = { onEnter: route as RouteAction }
   } else {
     config = route || {}
   }
