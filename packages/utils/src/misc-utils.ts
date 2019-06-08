@@ -26,3 +26,10 @@ export function toArray<T>(arg?: T | T[]): T[] {
     return []
   }
 }
+
+export function mapLazy<T, U>
+  (resolver: (() => Promise<T>), fn: (t: T) => U): () => Promise<U> {
+  return function () {
+    return resolver().then(fn)
+  }
+}

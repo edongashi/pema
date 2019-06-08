@@ -72,7 +72,7 @@ function matchPath(pathname: string, arg: string | MatchOptions): Match | null {
 
   const {
     path,
-    exact = false,
+    exact = true,
     strict = false,
     sensitive = false
   } = arg

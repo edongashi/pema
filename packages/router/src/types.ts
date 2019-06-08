@@ -30,7 +30,9 @@ export type RouterView =
   | { type: 'error', code: number, error?: JValue }
   | null
 
-export type Delayed<T> = Promise<T> | ((params: ActionParams) => T) | ((arg: ActionParams) => Promise<T>)
+export type Computed<T> = (params: ActionParams, state: Dictionary) => (T | Promise<T>)
+
+export type Delayed<T> = Promise<T> | Computed<T>
 
 export type LazyResolver<T> = () => Promise<T | DelayedResult<T>>
 
@@ -92,10 +94,7 @@ export type AnyAction =
   | RouteAction
 
 export type DelayableAction<T extends AnyAction>
-  = T | DelayedResult<T> | LazyResult<T>
-
-export type MaybeAction<T extends AnyAction>
-  = T | DelayedResult<T> | LazyResult<T>
+  = T | Computed<T> | DelayedResult<T> | LazyResult<T>
 
 export type FallbackView = any
 
@@ -171,18 +170,21 @@ export interface Router {
 }
 
 export interface RoutingTable {
-  [key: string]: RouteConfig
+  [key: string]: RouteConfig | DelayableAction<RouteAction> | DelayableAction<AnyAction>[]
 }
 
 export interface RouteConfig {
+  __result?: never
+  length?: never
+
   exact?: boolean
   strict?: boolean
   sensitive?: boolean
   order?: number
   stateless?: boolean
   routes?: RoutingTable
-  beforeEnter?: DelayableAction<TransitionAction> | DelayableAction<TransitionAction>[]
-  onEnter?: DelayableAction<RouteAction> | DelayableAction<RouteAction>[]
+  beforeEnter?: DelayableAction<TransitionAction> | DelayableAction<AnyAction>[]
+  onEnter?: DelayableAction<RouteAction> | DelayableAction<AnyAction>[]
   [key: string]: any
 }
 

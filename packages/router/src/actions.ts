@@ -12,9 +12,13 @@ import {
   LazyResolver,
   ErrorResult,
   View,
-  FallbackView
+  FallbackView,
+  RouteConfig,
+  RoutingTable,
+  DelayableAction,
+  AnyAction
 } from './types'
-import { ErrorObject, serializeError } from '@pema/utils'
+import { ErrorObject, mapLazy, serializeError } from '@pema/utils'
 
 export function delay<T>
   (p: Delayed<T>, fallback?: FallbackView): DelayedResult<T> {
@@ -34,6 +38,19 @@ export function lazy<T>(fn: LazyResolver<T>, fallback?: FallbackView): LazyResul
     fallback
   }
 }
+
+export function lazyView<TView extends View>
+  (resolver: (() => Promise<TView>), fallback?: FallbackView) {
+  return lazy(mapLazy(resolver, view), fallback)
+}
+
+export function lazyController<TController extends ControllerConstructor>
+  (resolver: (() => Promise<TController>), fallback?: FallbackView) {
+  return lazy(mapLazy(resolver, controller), fallback)
+}
+
+lazy.view = lazyView
+lazy.controller = lazyController
 
 export function view(view: View): ViewResult {
   return {
@@ -79,5 +96,33 @@ export function deny(): DenyResult {
   return {
     __result: true,
     type: 'deny'
+  }
+}
+
+export function route(action: DelayableAction<AnyAction>, routes?: RoutingTable): RouteConfig
+export function route(actions: DelayableAction<AnyAction>[], routes?: RoutingTable): RouteConfig
+export function route(config: RouteConfig): RouteConfig
+export function route(config: RouteConfig & { routes?: never }, routes: RoutingTable): RouteConfig
+export function route(
+  config: DelayableAction<AnyAction> | DelayableAction<AnyAction>[] | RouteConfig,
+  routes?: RoutingTable) {
+  if (typeof config === 'function') {
+    return {
+      onEnter: delay(config),
+      routes
+    }
+  }
+
+  if (Array.isArray(config) || config.__result) {
+    return {
+      onEnter: config,
+      routes
+    }
+  }
+
+  if (routes) {
+    return { ...config, routes }
+  } else {
+    return config
   }
 }

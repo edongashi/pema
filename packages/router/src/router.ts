@@ -537,7 +537,7 @@ class RouterImpl implements Router {
       toArray<DelayableAction<AnyAction>>(route.beforeEnter)
         .concat(toArray(route.onEnter))
         .reduce((promises: Array<Promise<any>>, action) => {
-          if (action.type === 'lazy') {
+          if (typeof action === 'object' && action.type === 'lazy') {
             promises.push(action.value())
           }
 

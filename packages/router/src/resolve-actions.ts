@@ -5,7 +5,7 @@ import {
   Delayed,
   FallbackView
 } from './types'
-import { invariant } from '@pema/utils'
+import { invariant, Dictionary } from '@pema/utils'
 import { error, allow, delay } from './actions'
 
 export default async function resolveActions(
@@ -16,6 +16,7 @@ export default async function resolveActions(
     actions = [actions]
   }
 
+  let state: Dictionary = {}
   async function resolveDelayed<T>(value: Delayed<T>, fallback: FallbackView | undefined): Promise<T> {
     const v = value as any
     if (!v) {
@@ -30,7 +31,7 @@ export default async function resolveActions(
       return await v
     }
 
-    const promise = v(arg)
+    const promise = v(arg, state)
     if (promise && typeof promise.then === 'function') {
       if (typeof fallback !== 'undefined') {
         setFallbackView(fallback)
@@ -44,7 +45,7 @@ export default async function resolveActions(
 
   for (let i = 0; i < actions.length; i++) {
     let action = actions[i]
-    if (action.type === 'lazy') {
+    if (typeof action === 'object' && action.type === 'lazy') {
       if (typeof action.fallback !== 'undefined') {
         setFallbackView(action.fallback)
       }
