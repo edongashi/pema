@@ -108,6 +108,7 @@ export interface View<TApp extends AppNode = AppNode> {
   onEnter?(params: ActionParams<TApp>): DelayableAction<ViewAction> | Promise<void> | void
   beforeLeave?(params: ActionParams<TApp>): DelayableAction<TransitionAction>
   onLeave?(params: ActionParams<TApp>): void
+  [prop: string]: any
 }
 
 export interface Controller<TApp extends AppNode = AppNode> {
