@@ -1,8 +1,8 @@
-import { Dictionary } from './types'
+import { Dictionary, Options } from './types'
 
-export function buildProps<TArg, TProps extends Dictionary = Dictionary>(
+export function buildOptions<TArg, TProps extends Dictionary = Dictionary>(
   app: TArg,
-  props?: TProps | ((arg: TArg) => TProps),
+  props?: Options<TProps, TArg>,
   clone = true): TProps | Dictionary {
   if (props && typeof props === 'object') {
     return clone ? { ...props } : props

@@ -1,4 +1,4 @@
-import { Dictionary, JValue, JObject } from '@pema/utils'
+import { Dictionary, JValue, JObject, Options } from '@pema/utils'
 
 export interface ServiceEnvFactory {
   (app: any): Dictionary
@@ -80,3 +80,6 @@ export type Services<T extends AppExtension> =
   T extends Dictionary ? T :
   T extends AppPlugin ? ResolvePlugin<T> :
   {}
+
+export type AppOptions<TOptions, TApp extends AppNode =
+  AppNode> = Options<TOptions, TApp>

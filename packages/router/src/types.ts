@@ -1,4 +1,4 @@
-import { AppNode, ServiceDependencies, AppPlugin } from '@pema/app'
+import { AppNode, ServiceDependencies, AppPlugin, AppOptions } from '@pema/app'
 import { JObject, JValue, Dictionary } from '@pema/utils'
 import { History } from 'history'
 
@@ -215,7 +215,7 @@ export interface HistoryBuildOptions {
 export interface RouterEnv {
   routes: RoutingTable
   createHistory: (options: HistoryBuildOptions) => History
-  historyProps?: HistoryBuildOptions
+  historyProps?: AppOptions<HistoryBuildOptions>
   controllersPath?: string
   fallbackDelay?: number
 }

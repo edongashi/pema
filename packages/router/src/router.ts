@@ -21,7 +21,7 @@ import {
 import {
   toArray,
   noop,
-  buildProps,
+  buildOptions,
   warning,
   JObject,
   Dictionary,
@@ -391,7 +391,7 @@ export default class RouterImpl implements Router {
     this.routes = new RouteCollection(env.routes)
     this.session = (state.session as SessionType) || {}
     const history = env.createHistory({
-      ...buildProps(app, env.historyProps),
+      ...buildOptions(app, env.historyProps),
       getUserConfirmation
     })
 

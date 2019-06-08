@@ -1,14 +1,15 @@
-import { AppPlugin, AppNode } from '@pema/app'
-import { Options } from '@pema/utils';
+import { AppPlugin, AppNode, AppOptions } from '@pema/app'
 import { RouterEnv } from './types'
 import Router from './router'
 
 export default function withRouter
-  <TApp extends AppNode = AppNode>(options: Options<RouterEnv, TApp>) {
-  const plugin: AppPlugin = (app: AppNode) => {
-    return app.extend({
+  <TApp extends AppNode = AppNode>(options: AppOptions<RouterEnv, TApp>) {
+  const plugin = (app: AppNode) => {
+    const result = app.extend({
       router: [Router, options]
     })
+
+    return result
   }
 
   return plugin
