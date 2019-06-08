@@ -1,5 +1,5 @@
 import { AppNode, ServiceDependencies, AppPlugin } from '@pema/app'
-import { JObject, JValue } from '@pema/utils'
+import { JObject, JValue, Dictionary } from '@pema/utils'
 import { History } from 'history'
 
 export type PathTuple = [string, JObject?, JValue?, string?]
@@ -22,10 +22,6 @@ export interface Match {
   isExact: boolean
   path: string
   url: string
-}
-
-export interface ControllerConstructor {
-  new(state: JValue, app: any): Controller
 }
 
 export type RouterView =
@@ -108,11 +104,15 @@ export interface View<TApp extends AppNode = AppNode> {
   onEnter?(params: ActionParams<TApp>): DelayableAction<ViewAction> | Promise<void> | void
   beforeLeave?(params: ActionParams<TApp>): DelayableAction<TransitionAction>
   onLeave?(params: ActionParams<TApp>): void
-  [prop: string]: any
+  [key: string]: any
+}
+
+export interface ControllerConstructor<TApp extends AppNode = AppNode> {
+  dependencies?: ServiceDependencies | AppPlugin<AppNode, TApp> | Function
+  new(state: JValue, app: TApp, env: Dictionary): Controller<TApp>
 }
 
 export interface Controller<TApp extends AppNode = AppNode> {
-  dependencies?: ServiceDependencies | AppPlugin<AppNode, TApp> | Function
   onEnter(params: ActionParams<TApp>): DelayableAction<ControllerAction>
   beforeLeave?(params: ActionParams<TApp>): DelayableAction<TransitionAction>
   onLeave?(params: ActionParams<TApp>): void
@@ -183,7 +183,7 @@ export interface RouteConfig {
   routes?: RoutingTable
   beforeEnter?: DelayableAction<TransitionAction> | DelayableAction<TransitionAction>[]
   onEnter?: DelayableAction<RouteAction> | DelayableAction<RouteAction>[]
-  [propName: string]: any
+  [key: string]: any
 }
 
 export interface KeyedRouteConfig extends RouteConfig {
