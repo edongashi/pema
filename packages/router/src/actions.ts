@@ -60,6 +60,8 @@ export function view(view: View): ViewResult {
   }
 }
 
+view.lazy = lazyView
+
 export function error(code: number, error?: ErrorObject | string): ErrorResult {
   return {
     __result: true,
@@ -84,6 +86,8 @@ export function controller<T extends ControllerConstructor>(ctor: T): Controller
     controller: ctor
   }
 }
+
+controller.lazy = lazyController
 
 export function allow(): AllowResult {
   return {

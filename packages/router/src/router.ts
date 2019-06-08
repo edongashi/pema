@@ -24,7 +24,8 @@ import {
   buildProps,
   warning,
   JObject,
-  Dictionary
+  Dictionary,
+  JValue
 } from '@pema/utils'
 import { AppNode } from '@pema/app'
 import {
@@ -64,7 +65,7 @@ const notFound = error(404)
 const forbidden = error(403)
 const internalError = error(500)
 
-class RouterImpl implements Router {
+export default class RouterImpl implements Router {
   private readonly app: AppNode
   private readonly routes: RouteCollection
   private readonly controllersPath: string
@@ -381,7 +382,8 @@ class RouterImpl implements Router {
     }
   }
 
-  constructor(state: JObject, app: AppNode, env: RouterEnv) {
+  constructor(state: JValue, app: AppNode, env: RouterEnv) {
+    state = (state || {}) as JObject
     const self = this
     this.view = null
     this.app = app
@@ -561,14 +563,13 @@ class RouterImpl implements Router {
 
   toJSON(): JObject {
     const { current } = this
-    if (current.route && current.route.stateless) {
-      return {}
+    const result: JObject = {}
+    if (current.route && !current.route.stateless) {
+      result.state = current.state
     }
 
-    return {
-      state: current.state || {},
-      session: this.session || {}
-    }
+    result.session = this.session || {}
+    return result
   }
 
   dispose() {

@@ -7,7 +7,7 @@ export interface ServiceEnvFactory {
 export type ServiceEnv = Dictionary | ServiceEnvFactory
 
 export interface ServiceConstructor {
-  new(state: JValue, app: any, env: Dictionary): any
+  new(state: JValue, app: any, env: any): any
 }
 
 export interface ServiceDependencies {

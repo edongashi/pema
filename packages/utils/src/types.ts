@@ -10,6 +10,8 @@ export interface Dictionary<T = any> {
   [key: string]: T
 }
 
+export type Options<T, TArg = any> = T | ((arg: TArg) => T)
+
 export type ErrorObject = {
   name?: string
   stack?: string
