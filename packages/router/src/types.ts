@@ -1,4 +1,4 @@
-import { AppNode } from '@pema/app'
+import { AppNode, ServiceDependencies, AppPlugin } from '@pema/app'
 import { JObject, JValue } from '@pema/utils'
 import { History } from 'history'
 
@@ -28,7 +28,11 @@ export interface ControllerConstructor {
   new(state: JValue, app: any): Controller
 }
 
-export type View = any
+export type RouterView =
+  | { type: 'view', view: View, status?: number }
+  | { type: 'fallback', fallback: FallbackView }
+  | { type: 'error', code: number, error?: JValue }
+  | null
 
 export type Delayed<T> = Promise<T> | ((params: ActionParams) => T) | ((arg: ActionParams) => Promise<T>)
 
@@ -55,12 +59,19 @@ export type DenyResult
   = IsResult & { type: 'deny' }
 
 export type DelayedResult<T>
-  = IsResult & { type: 'delay', value: Delayed<T>, fallback?: View }
+  = IsResult & { type: 'delay', value: Delayed<T>, fallback?: FallbackView }
 
 export type LazyResult<T>
-  = IsResult & { type: 'lazy', value: LazyResolver<T>, fallback?: View }
+  = IsResult & { type: 'lazy', value: LazyResolver<T>, fallback?: FallbackView }
 
-export type EnterAction =
+export type ControllerAction =
+  | DenyResult
+  | ViewResult
+  | RedirectResult
+  | ErrorResult
+
+export type ViewAction =
+  | AllowResult
   | DenyResult
   | ViewResult
   | RedirectResult
@@ -78,16 +89,32 @@ export type RouteAction =
   | ControllerResult
   | ErrorResult
 
-export type AnyAction = EnterAction | TransitionAction | RouteAction
+export type AnyAction =
+  | ControllerAction
+  | ViewAction
+  | TransitionAction
+  | RouteAction
 
 export type DelayableAction<T extends AnyAction>
   = T | DelayedResult<T> | LazyResult<T>
 
-export interface Controller {
-  onEnter(params: ActionParams): DelayableAction<EnterAction>
-  onShallowEnter?(params: ActionParams): DelayableAction<TransitionAction>
-  beforeLeave?(params: ActionParams): DelayableAction<TransitionAction>
-  onLeave?(params: ActionParams): void
+export type MaybeAction<T extends AnyAction>
+  = T | DelayedResult<T> | LazyResult<T>
+
+export type FallbackView = any
+
+export interface View<TApp extends AppNode = AppNode> {
+  dependencies?: ServiceDependencies | AppPlugin<AppNode, TApp> | Function
+  onEnter?(params: ActionParams<TApp>): DelayableAction<ViewAction> | Promise<void> | void
+  beforeLeave?(params: ActionParams<TApp>): DelayableAction<TransitionAction>
+  onLeave?(params: ActionParams<TApp>): void
+}
+
+export interface Controller<TApp extends AppNode = AppNode> {
+  dependencies?: ServiceDependencies | AppPlugin<AppNode, TApp> | Function
+  onEnter(params: ActionParams<TApp>): DelayableAction<ControllerAction>
+  beforeLeave?(params: ActionParams<TApp>): DelayableAction<TransitionAction>
+  onLeave?(params: ActionParams<TApp>): void
 }
 
 export interface Location extends PathObject {
@@ -109,10 +136,10 @@ export interface RouterStateBase {
   readonly session: JObject
 }
 
-export interface ActionParams extends RouterStateBase {
+export interface ActionParams<TApp extends AppNode = AppNode> extends RouterStateBase {
   readonly shallow: boolean
   readonly router: Router
-  readonly app: AppNode
+  readonly app: TApp
 }
 
 export interface RouterState extends RouterStateBase {
@@ -121,7 +148,7 @@ export interface RouterState extends RouterStateBase {
 
 export interface Router {
   readonly current: RouterState
-  readonly view: View
+  readonly view: RouterView
   push(path: string): void
   push(path: PathObject): void
   push(path: PathTuple): void

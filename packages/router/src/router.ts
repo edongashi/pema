@@ -5,17 +5,18 @@ import {
   PathTuple,
   Path,
   Controller,
-  View,
+  RouterView,
   AnyAction,
   RouterEnv,
   RouteAction,
   DelayableAction,
-  EnterAction,
+  ControllerAction,
   ActionParams,
   ControllerConstructor,
   RoutingTable,
   ViewResult,
-  ErrorResult
+  ErrorResult,
+  FallbackView
 } from './types'
 import {
   toArray,
@@ -43,7 +44,7 @@ import { error } from './actions'
 import resolveActions from './resolve-actions';
 
 interface ViewSetter {
-  (view: View): void
+  (fallback: FallbackView): void
   cancel(): void
 }
 
@@ -70,7 +71,7 @@ class RouterImpl implements Router {
   private readonly history: History
   private readonly unblock: () => void
   private readonly unlisten: () => void
-  private readonly viewSetter: ViewSetter
+  private readonly fallbackSetter: ViewSetter
 
   private readonly session: SessionType
   private locked: boolean = false
@@ -80,9 +81,9 @@ class RouterImpl implements Router {
     return this.current && this.current.controller || null
   }
 
-  private __setView(view: ViewResult | ErrorResult | null): void {
-    this.view = view
-    this.app.emit('router.view', view)
+  private __setView(routerView: RouterView): void {
+    this.view = routerView
+    this.app.emit('router.view', routerView)
   }
 
   private emitCurrent(previous: RouterState): void {
@@ -179,14 +180,19 @@ class RouterImpl implements Router {
     }
   }
 
-  private enterView(view: ViewResult): void {
-    this.viewSetter.cancel()
-    this.__setView(view)
+  private enterError(errorResult: ErrorResult): void {
+    this.fallbackSetter.cancel()
+    this.__setView(errorResult)
   }
 
-  private enterError(view: ErrorResult): void {
-    this.viewSetter.cancel()
-    this.__setView(view)
+  private enterView(viewResult: ViewResult): void {
+    this.fallbackSetter.cancel()
+    const { view } = viewResult
+    if (view && typeof view.dependencies === 'object') {
+      this.app.extend(view.dependencies)
+    }
+
+    this.__setView(viewResult) // todo
   }
 
   private async enterController
@@ -219,7 +225,7 @@ class RouterImpl implements Router {
       return true
     }
 
-    let result: DelayableAction<EnterAction>
+    let result: DelayableAction<ControllerAction>
     try {
       result = await controller.onEnter(params)
       warning(result, `Controller for route '${route.id}' has no entry action.`)
@@ -230,7 +236,7 @@ class RouterImpl implements Router {
     }
 
     const controllerAction =
-      await resolveActions(params, result, this.viewSetter) as EnterAction
+      await resolveActions(params, result, this.fallbackSetter) as ControllerAction
 
     switch (controllerAction.type) {
       case 'view':
@@ -279,7 +285,7 @@ class RouterImpl implements Router {
     try {
       const controller = this.currentController
       if (controller && controller.beforeLeave) {
-        const action = await resolveActions(params, controller.beforeLeave(params), this.viewSetter)
+        const action = await resolveActions(params, controller.beforeLeave(params), this.fallbackSetter)
         if (this.terminate(action, callback)) {
           return
         }
@@ -287,7 +293,7 @@ class RouterImpl implements Router {
 
       const { route } = params
       if (route.beforeEnter) {
-        const action = await resolveActions(params, route.beforeEnter, this.viewSetter)
+        const action = await resolveActions(params, route.beforeEnter, this.fallbackSetter)
         if (this.terminate(action, callback)) {
           return
         }
@@ -338,7 +344,7 @@ class RouterImpl implements Router {
     }
 
     this.locked = true
-    const action = await resolveActions(params, route.onEnter, this.viewSetter) as RouteAction
+    const action = await resolveActions(params, route.onEnter, this.fallbackSetter) as RouteAction
     let shouldEmit = true
     try {
       switch (action.type) {
@@ -397,8 +403,11 @@ class RouterImpl implements Router {
       fallbackDelay = 500
     }
 
-    this.viewSetter = throttle((view: View) => {
-      this.__setView(view)
+    this.fallbackSetter = throttle((fallback: FallbackView) => {
+      this.__setView({
+        type: 'fallback',
+        fallback
+      })
     }, fallbackDelay, { trailing: true })
 
     function getUserConfirmation(_: string, callback: (go: boolean) => void) {
@@ -418,7 +427,7 @@ class RouterImpl implements Router {
     }
   }
 
-  view: ViewResult | ErrorResult | null
+  view: RouterView
   current: RouterState
 
   push(path: string): void

@@ -2,21 +2,21 @@ import {
   ActionParams,
   DelayableAction,
   AnyAction,
-  View,
-  Delayed
+  Delayed,
+  FallbackView
 } from './types'
 import { invariant } from '@pema/utils'
-import { error, allow } from './actions'
+import { error, allow, delay } from './actions'
 
 export default async function resolveActions(
   arg: ActionParams,
   actions: DelayableAction<AnyAction> | DelayableAction<AnyAction>[],
-  setFallbackView: (view: View) => void): Promise<AnyAction> {
+  setFallbackView: (view: FallbackView) => void): Promise<AnyAction> {
   if (!Array.isArray(actions)) {
     actions = [actions]
   }
 
-  async function resolveDelayed<T>(value: Delayed<T>, fallback: View | undefined): Promise<T> {
+  async function resolveDelayed<T>(value: Delayed<T>, fallback: FallbackView | undefined): Promise<T> {
     const v = value as any
     if (!v) {
       return v
@@ -57,6 +57,10 @@ export default async function resolveActions(
     }
 
     let resolvedAction: AnyAction
+    if (typeof action === 'function') {
+      action = delay(action)
+    }
+
     if (action.type === 'delay') {
       try {
         resolvedAction = await resolveDelayed(action.value, action.fallback)

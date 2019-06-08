@@ -4,7 +4,6 @@ import {
   RoutingTable,
   RouteConfig,
   DelayableAction,
-  AnyAction,
   RouteAction
 } from './types'
 import sortBy from 'lodash.sortby'

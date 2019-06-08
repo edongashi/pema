@@ -39,6 +39,10 @@ export interface AppEnv extends Dictionary {
   defaultSerializer?: (component: any) => JValue
 }
 
+export interface AppPlugin<TApp extends AppNode = AppNode, TAppExtended extends TApp = TApp> {
+  (app: TApp): TAppExtended | void
+}
+
 export interface AppNode {
   readonly root: AppNode
   readonly env: AppEnv
@@ -54,16 +58,25 @@ export interface AppNode {
 }
 
 export interface DependencyGraph {
-  readonly dependencies: ServiceDependencies
+  readonly dependencies: ServiceDependencies | AppPlugin
 }
+
+type ResolvePlugin<T extends AppPlugin> = ReturnType<T> extends void ? {} : ReturnType<T>
+
+type ResolveDependencies<T extends ServiceDependencies | AppPlugin> =
+  T extends AppPlugin ? ResolvePlugin<T> :
+  T extends ServiceDependencies ? Instanced<T> :
+  never
 
 export type AppExtension =
   | DependencyGraph
   | ServiceDependencies
   | Dictionary
+  | AppPlugin
 
 export type Services<T extends AppExtension> =
-  T extends DependencyGraph ? Instanced<T["dependencies"]> :
+  T extends DependencyGraph ? ResolveDependencies<T['dependencies']> :
   T extends ServiceDependencies ? Instanced<T> :
   T extends Dictionary ? T :
-  never
+  T extends AppPlugin ? ResolvePlugin<T> :
+  {}

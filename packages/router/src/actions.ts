@@ -7,16 +7,17 @@ import {
   DenyResult,
   Path,
   RedirectResult,
-  View,
   ViewResult,
   LazyResult,
   LazyResolver,
-  ErrorResult
+  ErrorResult,
+  View,
+  FallbackView
 } from './types'
 import { ErrorObject, serializeError } from '@pema/utils'
 
 export function delay<T>
-  (p: Delayed<T>, fallback?: View): DelayedResult<T> {
+  (p: Delayed<T>, fallback?: FallbackView): DelayedResult<T> {
   return {
     __result: true,
     type: 'delay',
@@ -25,7 +26,7 @@ export function delay<T>
   }
 }
 
-export function lazy<T>(fn: LazyResolver<T>, fallback?: View): LazyResult<T> {
+export function lazy<T>(fn: LazyResolver<T>, fallback?: FallbackView): LazyResult<T> {
   return {
     __result: true,
     type: 'lazy',

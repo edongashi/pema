@@ -75,7 +75,7 @@ class AppNodeImpl implements AppNode {
             env = env(root)
           }
 
-          if (typeof (val as any).dependencies === 'object') {
+          if ((val as any).dependencies) {
             root.extend((val as any).dependencies)
           }
 
