@@ -71,7 +71,6 @@ export type ControllerAction =
 export type ViewAction =
   | AllowResult
   | DenyResult
-  | ViewResult
   | RedirectResult
   | ErrorResult
 
@@ -101,8 +100,6 @@ export type FallbackView = any
 export interface View<TApp extends AppNode = AppNode> {
   dependencies?: ServiceDependencies | AppPlugin<AppNode, TApp> | Function
   onEnter?(params: ActionParams<TApp>): DelayableAction<ViewAction> | Promise<void> | void
-  beforeLeave?(params: ActionParams<TApp>): DelayableAction<TransitionAction>
-  onLeave?(params: ActionParams<TApp>): void
   [key: string]: any
 }
 

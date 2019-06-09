@@ -8,15 +8,13 @@ import {
   RouterView,
   AnyAction,
   RouterEnv,
-  RouteAction,
   DelayableAction,
   ControllerAction,
   ActionParams,
   ControllerConstructor,
   RoutingTable,
-  ViewResult,
-  ErrorResult,
-  FallbackView
+  FallbackView,
+  View
 } from './types'
 import {
   toArray,
@@ -41,7 +39,7 @@ import {
   isOnlyHashChange
 } from './url-utils'
 import RouteCollection from './route-collection'
-import { error } from './actions'
+import { error, allow } from './actions'
 import resolveActions from './resolve-actions';
 
 interface ViewSetter {
@@ -63,7 +61,6 @@ interface SessionType {
 
 const notFound = error(404)
 const forbidden = error(403)
-const internalError = error(500)
 
 export default class RouterImpl implements Router {
   private readonly app: AppNode
@@ -83,8 +80,9 @@ export default class RouterImpl implements Router {
   }
 
   private __setView(routerView: RouterView): void {
+    const previousView = this.view
     this.view = routerView
-    this.app.emit('router.view', routerView)
+    this.app.emit('router.view', routerView, previousView)
   }
 
   private emitCurrent(previous: RouterState): void {
@@ -100,7 +98,6 @@ export default class RouterImpl implements Router {
       case 'redirect':
         callback(false)
         this.locked = false
-
         if (result.push) {
           this.push(result.path)
         } else {
@@ -110,7 +107,7 @@ export default class RouterImpl implements Router {
         return true
       case 'error':
         callback(false)
-        this.enterError(result)
+        this.setView(result)
         this.locked = false
         return true
       default:
@@ -181,23 +178,31 @@ export default class RouterImpl implements Router {
     }
   }
 
-  private enterError(errorResult: ErrorResult): void {
+  private setView(view: RouterView): void {
     this.fallbackSetter.cancel()
-    this.__setView(errorResult)
+    this.__setView(view)
   }
 
-  private enterView(viewResult: ViewResult): void {
-    this.fallbackSetter.cancel()
-    const { view } = viewResult
-    if (view && typeof view.dependencies === 'object') {
-      this.app.extend(view.dependencies)
+  private async enterView
+    (view: View, params: ActionParams): Promise<AnyAction> {
+    if (view && view.dependencies) {
+      this.app.extend(view.dependencies as any)
     }
 
-    this.__setView(viewResult) // todo
+    if (!view.onEnter) {
+      return allow()
+    }
+
+    const result = await view.onEnter(params)
+    if (!result) {
+      return allow()
+    }
+
+    return await resolveActions(params, result, this.fallbackSetter)
   }
 
   private async enterController
-    (ctor: ControllerConstructor, state: RouterState, params: ActionParams): Promise<boolean> {
+    (ctor: ControllerConstructor, params: ActionParams, state: RouterState): Promise<AnyAction> {
     const { app, controllersPath } = this
     const { route } = params
     const dict = app as Dictionary
@@ -214,54 +219,17 @@ export default class RouterImpl implements Router {
 
     if (!controller) {
       warning(false, `Controller for route '${route.id}' could not be instantiated.`)
-      this.enterError(notFound)
-      return true
+      return notFound
     }
 
     (state as Dictionary).controller = controller
 
     if (typeof controller.onEnter !== 'function') {
-      warning(false, `Controller for route '${route.id}' has no entry action.`)
-      this.enterError(notFound)
-      return true
+      return notFound
     }
 
-    let result: DelayableAction<ControllerAction>
-    try {
-      result = await controller.onEnter(params)
-      warning(result, `Controller for route '${route.id}' has no entry action.`)
-    } catch (e) {
-      warning(false, `Controller for route '${route.id}' threw an error during entry.`)
-      this.enterError(internalError)
-      return true
-    }
-
-    const controllerAction =
-      await resolveActions(params, result, this.fallbackSetter) as ControllerAction
-
-    switch (controllerAction.type) {
-      case 'view':
-        this.enterView(controllerAction)
-        return true
-      case 'redirect':
-        if (controllerAction.push) {
-          this.push(controllerAction.path)
-        } else {
-          this.replace(controllerAction.path)
-        }
-
-        return false
-      case 'error':
-        this.enterError(controllerAction)
-        return true
-      case 'deny':
-        this.enterError(forbidden)
-        return true
-      default:
-        warning(false, `Invalid result from '${route.id}' controller.`)
-        this.enterError(notFound)
-        return true
-    }
+    const result = await controller.onEnter(params)
+    return await resolveActions(params, result, this.fallbackSetter) as ControllerAction
   }
 
   private async beforeEnter(
@@ -330,56 +298,74 @@ export default class RouterImpl implements Router {
       return
     }
 
+    this.locked = true
+
+    const finalize = (view: RouterView | null) => {
+      this.setView(view || notFound)
+      this.locked = false
+      this.emitCurrent(previous)
+    }
+
     if (!params.shallow && previous.controller && previous.controller.onLeave) {
       try {
         previous.controller.onLeave(params)
       } catch (e) {
-        warning(false, `Controller for route '${previous.route.id}' threw an error during exit.`)
+        finalize(error(500, e))
+        return
       }
     }
 
-    if (!route.onEnter) {
-      warning(false, 'onEnter action is required for routes.')
-      this.enterError(notFound)
-      return
-    }
+    const enter = async (action: AnyAction, routerView: RouterView | null) => {
+      try {
+        switch (action.type) {
+          case 'deny':
+            finalize(forbidden)
+            return
+          case 'error':
+            finalize(action)
+            return
+          case 'redirect':
+            this.locked = false
+            if (action.push) {
+              this.push(action.path)
+            } else {
+              this.replace(action.path)
+            }
 
-    this.locked = true
-    const action = await resolveActions(params, route.onEnter, this.fallbackSetter) as RouteAction
-    let shouldEmit = true
-    try {
-      switch (action.type) {
-        case 'view':
-          this.enterView(action)
-          this.locked = false
-          return
-        case 'redirect':
-          shouldEmit = false
-          this.locked = false
-          if (action.push) {
-            this.push(action.path)
-          } else {
-            this.replace(action.path)
-          }
+            return
+          case 'controller':
+            if (routerView) {
+              finalize(routerView)
+              return
+            }
 
-          return
-        case 'error':
-          this.enterError(action)
-          this.locked = false
-          return
-        case 'controller':
-          const ended = await this.enterController(action.controller, state, params)
-          shouldEmit = ended
-          this.locked = false
-          return
-      }
-    } catch (e) {
-      this.locked = false
-    } finally {
-      if (shouldEmit) {
+            await enter(await this.enterController(action.controller, params, state), null)
+            return
+          case 'view':
+            if (routerView) {
+              finalize(routerView)
+              return
+            }
+
+            await enter(await this.enterView(action.view, params), action)
+            return
+          case 'allow':
+          default:
+            finalize(routerView)
+            return
+        }
+      } catch (e) {
+        finalize(error(500, e))
+        this.locked = false
         this.emitCurrent(previous)
       }
     }
+
+    const routeAction = route.onEnter
+      ? await resolveActions(params, route.onEnter, this.fallbackSetter)
+      : notFound
+
+    await enter(routeAction, null)
   }
 
   constructor(state: JValue, app: AppNode, env: RouterEnv) {

@@ -12,7 +12,9 @@ export default async function resolveActions(
   arg: ActionParams,
   actions: DelayableAction<AnyAction> | DelayableAction<AnyAction>[],
   setFallbackView: (view: FallbackView) => void): Promise<AnyAction> {
-  if (!Array.isArray(actions)) {
+  if (!actions) {
+    actions = []
+  } else if (!Array.isArray(actions)) {
     actions = [actions]
   }
 
