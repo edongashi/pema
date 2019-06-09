@@ -40,7 +40,7 @@ import {
 } from './url-utils'
 import RouteCollection from './route-collection'
 import { error, allow } from './actions'
-import resolveActions from './resolve-actions';
+import resolveActions from './resolve-actions'
 
 interface ViewSetter {
   (fallback: FallbackView): void
