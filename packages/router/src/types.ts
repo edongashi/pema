@@ -2,12 +2,11 @@ import { AppNode, ServiceDependencies, AppPlugin, AppOptions } from '@pema/app'
 import { JObject, JValue, Dictionary } from '@pema/utils'
 import { History } from 'history'
 
-export type PathTuple = [string, JObject?, JValue?, string?]
+export type PathTuple = [string, JObject?, string?]
 
 export interface PathObject {
   readonly path: string
   readonly query?: JObject
-  readonly state?: JValue
   readonly hash?: string
 }
 
@@ -117,8 +116,6 @@ export interface Controller<TApp extends AppNode = AppNode> {
 export interface Location extends PathObject {
   readonly path: string
   readonly query: JObject
-  readonly state: JValue
-  readonly validState: boolean
   readonly hash: string
 }
 
