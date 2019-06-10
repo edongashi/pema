@@ -1,3 +1,4 @@
+import { Request, Response } from 'express'
 import { Dictionary, JValue, JObject, Options } from '@pema/utils'
 
 export interface ServiceEnvFactory {
@@ -37,6 +38,8 @@ export interface Emitter {
 
 export interface AppEnv extends Dictionary {
   defaultSerializer?: (component: any) => JValue
+  req?: Request
+  res?: Response
 }
 
 export interface AppPlugin<TApp extends AppNode = AppNode, TAppExtended extends TApp = TApp> {
