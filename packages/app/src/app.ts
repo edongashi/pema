@@ -19,8 +19,8 @@ class AppNodeImpl implements AppNode {
   private readonly __events?: Emitter
 
   constructor(
-    root: AppNodeImpl | null = null,
     state: JObject = {},
+    root: AppNodeImpl | null = null,
     env: AppEnv = {},
     volatile: Dictionary = {}) {
     this.__state = state
@@ -95,7 +95,7 @@ class AppNodeImpl implements AppNode {
         } else if (val && typeof val === 'object') {
           let child = node[key] as AppNodeImpl
           if (!child) {
-            child = new AppNodeImpl(root, state[key] as JObject)
+            child = new AppNodeImpl(state[key] as JObject, root)
             state[key] = null
             node[key] = child
           }
@@ -185,7 +185,7 @@ class AppNodeImpl implements AppNode {
 export function app(): AppNode
 export function app(state: JObject): AppNode
 export function app(state?: JObject): AppNode {
-  return new AppNodeImpl(null, state)
+  return new AppNodeImpl(state)
 }
 
 export function withEnv
