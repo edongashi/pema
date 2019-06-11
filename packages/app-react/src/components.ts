@@ -1,5 +1,5 @@
 import { useValue, useEvent } from './hooks'
-import { invariant } from '@pema/utils/lib';
+import { invariant } from '@pema/utils'
 
 type ReaderRenderProps<T> =
   | { render: (value: T) => JSX.Element }
