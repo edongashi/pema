@@ -20,16 +20,19 @@ class AppNodeImpl implements AppNode {
 
   constructor(
     state: JObject = {},
-    root: AppNodeImpl | null = null,
-    env: AppEnv = {},
-    volatile: Dictionary = {}) {
+    root: AppNodeImpl | null = null) {
     this.__state = state
     if (root) {
       this.__root = root
     } else {
       this.__root = this
-      this.__env = env
-      this.__volatile = volatile
+      const browser = typeof window !== 'undefined'
+      this.__env = {
+        browser,
+        server: !browser
+      }
+
+      this.__volatile = {}
       this.__events = eventEmitter()
     }
   }

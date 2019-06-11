@@ -40,10 +40,12 @@ export interface AppEnv extends Dictionary {
   defaultSerializer?: (component: any) => JValue
   req?: Request
   res?: Response
+  server: boolean
+  browser: boolean
 }
 
 export interface AppPlugin<TApp extends AppNode = AppNode, TAppExtended extends TApp = TApp> {
-  (app: TApp): TAppExtended | void
+  (app: TApp, env: any): TAppExtended | void
 }
 
 export interface AppNode {

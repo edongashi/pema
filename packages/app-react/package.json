@@ -1,0 +1,39 @@
+{
+  "name": "@pema/app-react",
+  "version": "0.1.0",
+  "description": "> TODO: description",
+  "author": "Edon Gashi <edon.gashi@uni-pr.edu>",
+  "homepage": "https://github.com/edongashi/pema#readme",
+  "license": "MIT",
+  "main": "lib.index.js",
+  "typings": "lib/index.d.ts",
+  "sideEffects": false,
+  "directories": {
+    "lib": "lib"
+  },
+  "files": [
+    "lib"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/edongashi/pema.git",
+    "directory": "packages/app-react"
+  },
+  "scripts": {
+    "tsc": "tsc",
+    "test": "echo \"Error: run tests from root\" && exit 1"
+  },
+  "bugs": {
+    "url": "https://github.com/edongashi/pema/issues"
+  },
+  "dependencies": {
+    "@pema/app": "^0.1.0",
+    "@pema/utils": "^0.1.0",
+    "lodash.get": "^4.4.2",
+    "react": "^16.8.6"
+  },
+  "devDependencies": {
+    "@types/lodash.get": "^4.4.6",
+    "@types/react": "^16.8.19"
+  }
+}
