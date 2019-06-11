@@ -10,17 +10,34 @@ export function useApp(): AppNode {
   return app as AppNode
 }
 
-export function useAppValue<T>(key: string): T {
+export function useValue<T>(key: string): T {
   const app = useApp()
-  const [value, setValue] = useState(get(app, key) as T)
+  const [value, setValue] = useState(() => get(app, key) as T)
   useEffect(function () {
     function listen(newValue: T) {
       setValue(newValue)
     }
 
-    app.events.on(key, listen)
-    return () => app.events.off(key, listen)
+    if (typeof key === 'string') {
+      app.events.on(key, listen)
+      return () => app.events.off(key, listen)
+    }
   }, [key, app])
 
   return value
+}
+
+export function useEvent(event: string): void {
+  const [tick, setTick] = useState(0)
+  const app = useApp()
+  useEffect(function () {
+    function listen() {
+      setTick((tick + 1) % 100)
+    }
+
+    if (typeof event === 'string') {
+      app.events.on(event, listen)
+      return () => app.events.off(event, listen)
+    }
+  }, [event, app])
 }
