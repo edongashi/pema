@@ -16,6 +16,10 @@ export default class MemorySession implements Session {
     this.state[key] = value
   }
 
+  async remove(key: string) {
+    delete this.state[key]
+  }
+
   async clear(): Promise<void> {
     this.state = {}
   }

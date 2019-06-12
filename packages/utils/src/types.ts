@@ -18,3 +18,7 @@ export type ErrorObject = {
   message?: string
   code?: string
 } & JObject
+
+export type Constructor<T> =
+  | { new(): T }
+  | [{ new(): T }, Dictionary]
