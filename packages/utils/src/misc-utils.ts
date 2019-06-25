@@ -40,12 +40,13 @@ export function memoizeLazy<T>(resolver: () => Promise<T>): () => Promise<T> {
     if (promise) {
       return promise
     } else {
-      promise = resolver().catch(err => {
+      const temp = resolver().catch(err => {
         promise = null
         throw err
       })
 
-      return promise
+      promise = temp
+      return temp
     }
   }
 }
