@@ -274,10 +274,9 @@ export default class RouterImpl implements Router {
       callback(true)
     } finally {
       if (!called) {
+        this.locked = false
         callback(false)
       }
-
-      this.locked = false
     }
   }
 
@@ -401,7 +400,7 @@ export default class RouterImpl implements Router {
         type: 'fallback',
         fallback
       })
-    }, fallbackDelay, { trailing: true })
+    }, fallbackDelay, { leading: false, trailing: true })
 
     function getUserConfirmation(_: string, callback: (go: boolean) => void) {
       self.beforeEnter(nextLocation, nextAction, callback)

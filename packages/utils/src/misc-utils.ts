@@ -33,3 +33,15 @@ export function mapLazy<T, U>
     return resolver().then(fn)
   }
 }
+
+export function memoizeLazy<T>(resolver: () => Promise<T>): () => Promise<T> {
+  let promise: null | Promise<T> = null
+  return () => {
+    if (promise) {
+      return promise
+    } else {
+      promise = resolver()
+      return promise
+    }
+  }
+}

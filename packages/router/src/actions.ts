@@ -18,7 +18,7 @@ import {
   DelayableAction,
   AnyAction
 } from './types'
-import { mapLazy, serializeError, ErrorLike } from '@pema/utils'
+import { mapLazy, memoizeLazy, serializeError, ErrorLike } from '@pema/utils'
 
 export function delay<T>
   (p: Delayed<T>, fallback?: FallbackView): DelayedResult<T> {
@@ -30,11 +30,11 @@ export function delay<T>
   }
 }
 
-export function lazy<T>(fn: LazyResolver<T>, fallback?: FallbackView): LazyResult<T> {
+export function lazy<T>(resolver: LazyResolver<T>, fallback?: FallbackView): LazyResult<T> {
   return {
     __result: true,
     type: 'lazy',
-    value: fn,
+    value: memoizeLazy(resolver),
     fallback
   }
 }
