@@ -251,6 +251,7 @@ export default class RouterImpl implements Router {
 
     this.locked = true
     const { params } = cached
+    let called = false
     try {
       const controller = this.currentController
       if (controller && controller.beforeLeave) {
@@ -269,9 +270,13 @@ export default class RouterImpl implements Router {
       }
 
       this.locked = false
+      called = true
       callback(true)
     } finally {
-      callback(false)
+      if (!called) {
+        callback(false)
+      }
+
       this.locked = false
     }
   }

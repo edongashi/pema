@@ -1,8 +1,6 @@
 import { Path, Location } from './types'
 import { warning, JObject } from '@pema/utils'
-import { Location as HistoryLocation } from 'history'
-import { parsePath } from 'history/PathUtils'
-import { createLocation } from 'history/LocationUtils'
+import { Location as HistoryLocation, parsePath, createLocation } from 'history'
 import qs from 'qs'
 
 export function isOnlyHashChange(oldHref: string, newHref: string): boolean {

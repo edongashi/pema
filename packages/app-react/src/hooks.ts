@@ -1,19 +1,19 @@
-import { useContext, useState, useEffect } from 'react'
+import { useContext, useState, useLayoutEffect } from 'react'
 import { AppNode } from '@pema/app'
 import { invariant } from '@pema/utils'
 import get from 'lodash.get'
-import AppNodeContext from './context'
+import AppContext from './context'
 
-export function useApp(): AppNode {
-  const app = useContext(AppNodeContext)
+export function useApp<TApp extends AppNode = AppNode>(): TApp {
+  const app = useContext(AppContext)
   invariant(app, 'No application context found.')
-  return app as AppNode
+  return app as TApp
 }
 
 export function useValue<T>(key: string): T {
   const app = useApp()
   const [value, setValue] = useState(() => get(app, key) as T)
-  useEffect(function () {
+  useLayoutEffect(function () {
     function listen(newValue: T) {
       setValue(newValue)
     }
@@ -28,11 +28,11 @@ export function useValue<T>(key: string): T {
 }
 
 export function useEvent(event: string): void {
-  const [tick, setTick] = useState(0)
+  const [, forceUpdate] = useState(0)
   const app = useApp()
-  useEffect(function () {
+  useLayoutEffect(function () {
     function listen() {
-      setTick((tick + 1) % 100)
+      forceUpdate(x => (x + 1) % 10)
     }
 
     if (typeof event === 'string') {

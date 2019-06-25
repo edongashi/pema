@@ -1,5 +1,5 @@
 import { AppNode, ServiceDependencies, AppPlugin, AppOptions } from '@pema/app'
-import { JObject, JValue, Dictionary } from '@pema/utils'
+import { JObject, JValue, Dictionary, ErrorLike } from '@pema/utils'
 import { History } from 'history'
 
 export type PathTuple = [string, JObject?, string?]
@@ -26,7 +26,7 @@ export interface Match {
 export type RouterView =
   | { type: 'view', view: View, status?: number }
   | { type: 'fallback', fallback: FallbackView }
-  | { type: 'error', code: number, error?: JValue }
+  | { type: 'error', code: number, error?: ErrorLike }
   | null
 
 export type Computed<T> = (params: ActionParams, state: Dictionary) => (T | Promise<T>)
@@ -44,7 +44,7 @@ export type RedirectResult
   = IsResult & { type: 'redirect', path: Path, push?: boolean }
 
 export type ErrorResult
-  = IsResult & { type: 'error', code: number, error?: JValue }
+  = IsResult & { type: 'error', code: number, error?: ErrorLike }
 
 export type ControllerResult
   = IsResult & { type: 'controller', controller: ControllerConstructor }
@@ -128,11 +128,12 @@ export interface RouterStateBase {
   readonly branch: MatchedRoute[]
   readonly state: JObject
   readonly session: JObject
+  readonly shallow: boolean
+  readonly router: Router
+  readonly app: AppNode
 }
 
 export interface ActionParams<TApp extends AppNode = AppNode> extends RouterStateBase {
-  readonly shallow: boolean
-  readonly router: Router
   readonly app: TApp
 }
 

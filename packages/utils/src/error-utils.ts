@@ -1,9 +1,9 @@
 import toJson from 'serialize-error'
-import { ErrorObject, JValue } from './types'
+import { ErrorLike, ErrorObject } from './types'
 
 const unknownError = 'Error'
 
-export function serializeError(error: ErrorObject | string): JValue {
+export function serializeError(error: ErrorLike): ErrorObject | null {
   if (!error) {
     return null
   }
@@ -15,7 +15,7 @@ export function serializeError(error: ErrorObject | string): JValue {
   return toJson(error)
 }
 
-export function stringifyError(error: ErrorObject | string): string {
+export function stringifyError(error: ErrorLike): string {
   if (!error) {
     return unknownError
   }

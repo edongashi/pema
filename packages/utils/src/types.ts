@@ -19,6 +19,8 @@ export type ErrorObject = {
   code?: string
 } & JObject
 
+export type ErrorLike = ErrorObject | string | null | undefined
+
 export type Constructor<T> =
   | { new(): T }
   | [{ new(): T }, Dictionary]

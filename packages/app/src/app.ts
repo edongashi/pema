@@ -6,7 +6,8 @@ import {
   Extended,
   ServiceEnv,
   Emitter,
-  AppEnv
+  AppEnv,
+  AppPlugin
 } from './types'
 import eventEmitter from 'event-emitter'
 import allOff from 'event-emitter/all-off'
@@ -54,6 +55,7 @@ class AppNodeImpl implements AppNode {
   }
 
   extend<T extends this>(plugin: (app: this) => T): T
+  extend<T extends AppNode = this, TExtended extends T = T>(plugin: AppPlugin): this & TExtended
   extend<T extends ServiceDependencies>(services: T): Extended<this, T>
   extend(services: ServiceDependencies | Function): any {
     if (typeof services === 'object') {

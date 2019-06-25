@@ -8,7 +8,7 @@ export interface ServiceEnvFactory {
 export type ServiceEnv = Dictionary | ServiceEnvFactory
 
 export interface ServiceConstructor {
-  new(state: JValue, app: any, env: any): any
+  new(state: any, app: any, env: any): any
 }
 
 export interface ServiceDependencies {
@@ -54,6 +54,7 @@ export interface AppNode {
   readonly volatile: Dictionary
   readonly events: Emitter
   extend<T extends this>(plugin: (app: this) => T): T
+  extend<T extends AppNode = this, TExtended extends T = T>(plugin: AppPlugin<T, TExtended>): this & TExtended
   extend<T extends ServiceDependencies>(services: T): Extended<this, T>
   visit(visitor: ((service: any) => void)): void
   emit(type: string, ...args: any[]): void

@@ -18,7 +18,7 @@ import {
   DelayableAction,
   AnyAction
 } from './types'
-import { ErrorObject, mapLazy, serializeError } from '@pema/utils'
+import { mapLazy, serializeError, ErrorLike } from '@pema/utils'
 
 export function delay<T>
   (p: Delayed<T>, fallback?: FallbackView): DelayedResult<T> {
@@ -62,7 +62,7 @@ export function view(view: View): ViewResult {
 
 view.lazy = lazyView
 
-export function error(code: number, error?: ErrorObject | string): ErrorResult {
+export function error(code: number, error?: ErrorLike): ErrorResult {
   return {
     __result: true,
     type: 'error',
