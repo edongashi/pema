@@ -1,1 +1,2 @@
-export { default as TokenAuthStore } from './token-auth-store'
+export { default as UserStore } from './user-store'
+export * from './types'

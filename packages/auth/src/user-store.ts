@@ -1,13 +1,13 @@
 import { AppNode } from '@pema/app'
 import { Session } from '@pema/session'
 import { JValue, JObject } from '@pema/utils'
-import { AuthStore } from './types'
+import { UserStore } from './types'
 
-export interface AuthStoreEnv {
+export interface UserStoreEnv {
   session: Session
 }
 
-export default class TokenAuthStore implements AuthStore {
+export default class UserStoreImpl implements UserStore {
   private session: Session
   private _claims: JObject
 
@@ -19,6 +19,10 @@ export default class TokenAuthStore implements AuthStore {
     return this._claims
   }
 
+  signIn(claims: JObject): Promise<void> {
+    throw new Error('Method not implemented.');
+  }
+
   signOut(): Promise<void> {
     return this.session.remove('auth.claims')
   }
@@ -27,7 +31,7 @@ export default class TokenAuthStore implements AuthStore {
     this._claims = (await this.session.get('auth.claims') || {}) as JObject
   }
 
-  constructor(state: JValue, app: AppNode, env: AuthStoreEnv) {
+  constructor(state: JValue, app: AppNode, env: UserStoreEnv) {
     this._claims = {}
     this.session = env.session
   }

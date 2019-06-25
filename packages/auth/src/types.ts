@@ -1,7 +1,7 @@
 import { JObject } from '@pema/utils'
 
-export interface AuthStore {
-  readonly authenticated: boolean
+export interface UserStore {
   readonly claims: JObject
+  signIn(claims: JObject): Promise<void>
   signOut(): Promise<void>
 }

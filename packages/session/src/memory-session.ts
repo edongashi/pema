@@ -20,10 +20,6 @@ export default class MemorySession implements Session {
     delete this.state[key]
   }
 
-  async clear(): Promise<void> {
-    this.state = {}
-  }
-
   toJSON(): JObject {
     return this.state
   }

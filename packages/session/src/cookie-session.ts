@@ -11,6 +11,6 @@ export default class CookieSession implements Session {
   async set(key: string, value: JValue): Promise<void> {
   }
 
-  async clear(): Promise<void> {
+  async remove(key: string): Promise<void> {
   }
 }
