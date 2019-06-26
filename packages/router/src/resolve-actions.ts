@@ -3,14 +3,15 @@ import {
   DelayableAction,
   AnyAction,
   Delayed,
-  FallbackView
+  FallbackView,
+  DelayedResult
 } from './types'
 import { invariant, Dictionary } from '@pema/utils'
 import { error, allow, delay } from './actions'
 
 export default async function resolveActions(
   arg: ActionParams,
-  actions: DelayableAction<AnyAction> | DelayableAction<AnyAction>[],
+  actions: DelayedResult<void> | DelayableAction<AnyAction> | Array<DelayedResult<void> | DelayableAction<AnyAction>>,
   setFallbackView: (view: FallbackView) => void): Promise<AnyAction> {
   if (!actions) {
     actions = []
@@ -47,6 +48,10 @@ export default async function resolveActions(
 
   for (let i = 0; i < actions.length; i++) {
     let action = actions[i]
+    if (!action) {
+      continue
+    }
+
     if (typeof action === 'object' && action.type === 'lazy') {
       if (typeof action.fallback !== 'undefined') {
         setFallbackView(action.fallback)
@@ -59,14 +64,14 @@ export default async function resolveActions(
       }
     }
 
-    let resolvedAction: AnyAction
     if (typeof action === 'function') {
       action = delay(action)
     }
 
+    let resolvedAction: AnyAction | void
     if (action.type === 'delay') {
       try {
-        resolvedAction = await resolveDelayed(action.value, action.fallback)
+        resolvedAction = await resolveDelayed<AnyAction | void>(action.value, action.fallback)
       } catch (e) {
         return error(500, e)
       }
