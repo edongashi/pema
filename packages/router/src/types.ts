@@ -98,7 +98,7 @@ export type FallbackView = any
 
 export interface View<TApp extends AppNode = AppNode> {
   dependencies?: ServiceDependencies | AppPlugin<AppNode, TApp> | Function
-  onEnter?(params: ActionParams<TApp>): DelayableAction<ViewAction> | Promise<void> | void
+  onEnter?(params: ActionParams<TApp>): DelayableAction<ViewAction> | DelayedResult<void> | void
   [key: string]: any
 }
 
