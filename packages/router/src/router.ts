@@ -193,7 +193,7 @@ export default class RouterImpl implements Router {
       return allow()
     }
 
-    const result = await view.onEnter(params)
+    const result = view.onEnter
     if (!result) {
       return allow()
     }

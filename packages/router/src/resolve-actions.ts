@@ -4,14 +4,19 @@ import {
   AnyAction,
   Delayed,
   FallbackView,
-  DelayedResult
+  DelayedResult,
+  Computed
 } from './types'
 import { invariant, Dictionary } from '@pema/utils'
 import { error, allow, delay } from './actions'
 
 export default async function resolveActions(
   arg: ActionParams,
-  actions: DelayedResult<void> | DelayableAction<AnyAction> | Array<DelayedResult<void> | DelayableAction<AnyAction>>,
+  actions:
+    | DelayedResult<void>
+    | Computed<void>
+    | DelayableAction<AnyAction>
+    | Array<DelayedResult<void> | Computed<void> | DelayableAction<AnyAction>>,
   setFallbackView: (view: FallbackView) => void): Promise<AnyAction> {
   if (!actions) {
     actions = []
@@ -65,7 +70,16 @@ export default async function resolveActions(
     }
 
     if (typeof action === 'function') {
-      action = delay(action)
+      try {
+        const result = await resolveDelayed(action as Computed<AnyAction | void>, undefined)
+        if (!result) {
+          continue
+        }
+
+        action = result
+      } catch (e) {
+        return error(500, e)
+      }
     }
 
     let resolvedAction: AnyAction | void

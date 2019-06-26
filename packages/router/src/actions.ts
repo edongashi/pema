@@ -16,12 +16,14 @@ import {
   RouteConfig,
   RoutingTable,
   DelayableAction,
-  AnyAction
+  AnyAction,
+  ActionParams
 } from './types'
 import { mapLazy, memoizeLazy, serializeError, ErrorLike } from '@pema/utils'
 
-export function delay<T>
-  (p: Delayed<T>, fallback?: FallbackView): DelayedResult<T> {
+export function delay
+  <T, TParams extends ActionParams = ActionParams>
+  (p: Delayed<T, TParams>, fallback?: FallbackView): DelayedResult<T, TParams> {
   return {
     __result: true,
     type: 'delay',
@@ -30,7 +32,9 @@ export function delay<T>
   }
 }
 
-export function lazy<T>(resolver: LazyResolver<T>, fallback?: FallbackView): LazyResult<T> {
+export function lazy
+  <T, TParams extends ActionParams = ActionParams>
+  (resolver: LazyResolver<T, TParams>, fallback?: FallbackView): LazyResult<T, TParams> {
   return {
     __result: true,
     type: 'lazy',
@@ -103,13 +107,20 @@ export function deny(): DenyResult {
   }
 }
 
-export function route(action: DelayableAction<AnyAction>, routes?: RoutingTable): RouteConfig
-export function route(actions: DelayableAction<AnyAction>[], routes?: RoutingTable): RouteConfig
-export function route(config: RouteConfig): RouteConfig
-export function route(config: RouteConfig & { routes?: never }, routes: RoutingTable): RouteConfig
-export function route(
-  config: DelayableAction<AnyAction> | DelayableAction<AnyAction>[] | RouteConfig,
-  routes?: RoutingTable) {
+export function route
+  <TParams extends ActionParams = ActionParams>
+  (action: DelayableAction<AnyAction, TParams>, routes?: RoutingTable): RouteConfig
+export function route
+  <TParams extends ActionParams = ActionParams>
+  (actions: DelayableAction<AnyAction>[], routes?: RoutingTable): RouteConfig
+export function route
+  <TParams extends ActionParams = ActionParams>
+  (config: RouteConfig): RouteConfig
+export function route
+  <TParams extends ActionParams = ActionParams>
+  (config: RouteConfig & { routes?: never }, routes: RoutingTable): RouteConfig
+export function route
+  (config: DelayableAction<AnyAction> | DelayableAction<AnyAction>[] | RouteConfig, routes?: RoutingTable) {
   if (typeof config === 'function') {
     return {
       onEnter: delay(config),

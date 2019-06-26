@@ -1,4 +1,4 @@
-import { AppNode, ServiceDependencies, AppPlugin, AppOptions } from '@pema/app'
+import { AppNode, ServiceDependencies, AppPlugin, AppOptions, Instanced } from '@pema/app'
 import { JObject, JValue, Dictionary, ErrorLike } from '@pema/utils'
 import { History } from 'history'
 
@@ -29,11 +29,11 @@ export type RouterView =
   | { type: 'error', code: number, error?: ErrorLike }
   | null
 
-export type Computed<T> = (params: ActionParams, state: Dictionary) => (T | Promise<T>)
+export type Computed<T, TParams extends ActionParams = ActionParams> = (params: TParams, state: Dictionary) => (T | Promise<T>)
 
-export type Delayed<T> = Promise<T> | Computed<T>
+export type Delayed<T, TParams extends ActionParams = ActionParams> = Promise<T> | Computed<T, TParams>
 
-export type LazyResolver<T> = () => Promise<T | DelayedResult<T>>
+export type LazyResolver<T, TParams extends ActionParams = ActionParams> = () => Promise<T | DelayedResult<T, TParams>>
 
 type IsResult = { __result: true }
 
@@ -55,11 +55,11 @@ export type AllowResult
 export type DenyResult
   = IsResult & { type: 'deny' }
 
-export type DelayedResult<T>
-  = IsResult & { type: 'delay', value: Delayed<T>, fallback?: FallbackView }
+export type DelayedResult<T, TParams extends ActionParams = ActionParams>
+  = IsResult & { type: 'delay', value: Delayed<T, TParams>, fallback?: FallbackView }
 
-export type LazyResult<T>
-  = IsResult & { type: 'lazy', value: LazyResolver<T>, fallback?: FallbackView }
+export type LazyResult<T, TParams extends ActionParams = ActionParams>
+  = IsResult & { type: 'lazy', value: LazyResolver<T, TParams>, fallback?: FallbackView }
 
 export type ControllerAction =
   | DenyResult
@@ -91,14 +91,17 @@ export type AnyAction =
   | TransitionAction
   | RouteAction
 
-export type DelayableAction<T extends AnyAction>
-  = T | Computed<T> | DelayedResult<T> | LazyResult<T>
+export type DelayableAction<T extends AnyAction, TParams extends ActionParams = ActionParams>
+  = T | Computed<T, TParams> | DelayedResult<T, TParams> | LazyResult<T, TParams>
 
 export type FallbackView = any
 
 export interface View<TApp extends AppNode = AppNode> {
   dependencies?: ServiceDependencies | AppPlugin<AppNode, TApp> | Function
-  onEnter?(params: ActionParams<TApp>): DelayableAction<ViewAction> | DelayedResult<void> | void
+  onEnter?:
+  | DelayableAction<ViewAction, ActionParams<TApp>>
+  | DelayedResult<void, ActionParams<TApp>>
+  | Computed<void, ActionParams<TApp>>
   [key: string]: any
 }
 
@@ -108,8 +111,8 @@ export interface ControllerConstructor<TApp extends AppNode = AppNode> {
 }
 
 export interface Controller<TApp extends AppNode = AppNode> {
-  onEnter(params: ActionParams<TApp>): DelayableAction<ControllerAction>
-  beforeLeave?(params: ActionParams<TApp>): DelayableAction<TransitionAction>
+  onEnter(params: ActionParams<TApp>): DelayableAction<ControllerAction, ActionParams<TApp>>
+  beforeLeave?(params: ActionParams<TApp>): DelayableAction<TransitionAction, ActionParams<TApp>>
   onLeave?(params: ActionParams<TApp>): void
 }
 
