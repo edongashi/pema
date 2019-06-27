@@ -1,5 +1,5 @@
-import { AppNode, ServiceDependencies, AppPlugin, AppOptions, Instanced } from '@pema/app'
-import { JObject, JValue, Dictionary, ErrorLike } from '@pema/utils'
+import { AppNode, ServiceDependencies, AppOptions } from '@pema/app'
+import { JObject, Dictionary, ErrorLike } from '@pema/utils'
 import { History } from 'history'
 
 export type PathTuple = [string, JObject?, string?]
@@ -96,24 +96,32 @@ export type DelayableAction<T extends AnyAction, TParams extends ActionParams = 
 
 export type FallbackView = any
 
-export interface View<TApp extends AppNode = AppNode> {
-  dependencies?: ServiceDependencies | AppPlugin<AppNode, TApp> | Function
-  onEnter?:
-  | DelayableAction<ViewAction, ActionParams<TApp>>
-  | DelayedResult<void, ActionParams<TApp>>
-  | Computed<void, ActionParams<TApp>>
+type SingleOrArray<T> = T | T[]
+
+export interface View<TProps extends ActionParams = ActionParams> {
+  dependencies?: ServiceDependencies
+  onEnter?: SingleOrArray<
+    | DelayableAction<ViewAction, TProps>
+    | DelayedResult<void, TProps>
+    | Computed<void, TProps>>
   [key: string]: any
 }
 
-export interface ControllerConstructor<TApp extends AppNode = AppNode> {
-  dependencies?: ServiceDependencies | AppPlugin<AppNode, TApp> | Function
-  new(state: JValue, app: TApp, env: Dictionary): Controller<TApp>
+export interface ControllerConstructor<TController extends ControllerBase = ControllerBase> {
+  dependencies?: ServiceDependencies
+  new(state: any, app: any, env: any): TController
 }
 
-export interface Controller<TApp extends AppNode = AppNode> {
-  onEnter(params: ActionParams<TApp>): DelayableAction<ControllerAction, ActionParams<TApp>>
-  beforeLeave?(params: ActionParams<TApp>): DelayableAction<TransitionAction, ActionParams<TApp>>
-  onLeave?(params: ActionParams<TApp>): void
+export interface ControllerBase {
+  onEnter: DelayableAction<ControllerAction, any> | DelayableAction<AnyAction, any>[]
+  beforeLeave?: DelayableAction<TransitionAction, any>
+  onLeave?(params: any): void
+}
+
+export interface Controller<TProps extends ActionParams = ActionParams> extends ControllerBase {
+  onEnter: DelayableAction<ControllerAction, TProps> | DelayableAction<AnyAction, TProps>[]
+  beforeLeave?: DelayableAction<TransitionAction, TProps>
+  onLeave?(params: TProps): void
 }
 
 export interface Location extends PathObject {
@@ -122,7 +130,7 @@ export interface Location extends PathObject {
   readonly hash: string
 }
 
-export interface RouterStateBase {
+export interface ActionParams<TApp extends AppNode = AppNode> {
   readonly action: 'PUSH' | 'REPLACE' | 'POP'
   readonly location: PathObject
   readonly href: string
@@ -133,14 +141,10 @@ export interface RouterStateBase {
   readonly session: JObject
   readonly shallow: boolean
   readonly router: Router
-  readonly app: AppNode
-}
-
-export interface ActionParams<TApp extends AppNode = AppNode> extends RouterStateBase {
   readonly app: TApp
 }
 
-export interface RouterState extends RouterStateBase {
+export interface RouterState extends ActionParams {
   readonly controller: Controller | null
 }
 

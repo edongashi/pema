@@ -3,10 +3,13 @@ import {
   MatchedRoute,
   RoutingTable
 } from './types'
-import sortBy from 'lodash.sortby'
 import { matchRoutes, computeRootMatch } from './match'
 import { error, route } from './actions'
 import { join } from './url-utils'
+
+function sorter(a: KeyedRouteConfig, b: KeyedRouteConfig) {
+  return (a.order || 0) - (b.order || 0)
+}
 
 function flattenRoutes(path: string, routes: RoutingTable) {
   const childRoutes: KeyedRouteConfig[] = []
@@ -17,7 +20,7 @@ function flattenRoutes(path: string, routes: RoutingTable) {
     childRoutes.push(toKeyedRoute(join(path, childPath), routes[childPath]))
   }
 
-  return sortBy(childRoutes, r => r.order || 0)
+  return childRoutes.sort(sorter)
 }
 
 function toKeyedRoute(path: string, r: any): KeyedRouteConfig {
@@ -62,9 +65,11 @@ export default class RouteCollection {
   registerRoutes(routes: RoutingTable): void {
     const current = this.routes
     const all = current.concat(flattenRoutes('/', routes))
-    this.routes = current.length > 0
-      ? sortBy(all, r => r.order || 0)
-      : all
+    if (current.length > 0) {
+      all.sort(sorter)
+    }
+
+    this.routes = all
   }
 
   match(pathname: string): MatchedRoute[] {

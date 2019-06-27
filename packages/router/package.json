@@ -30,7 +30,6 @@
     "@pema/app": "^0.1.0",
     "@pema/utils": "^0.1.0",
     "history": "^4.9.0",
-    "lodash.sortby": "^4.7.0",
     "lodash.throttle": "^4.1.1",
     "path-to-regexp": "^3.0.0",
     "qs": "^6.7.0"

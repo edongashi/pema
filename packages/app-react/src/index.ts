@@ -1,2 +1,3 @@
-export { useApp, useValue, useEvent } from './hooks'
+export { useApp, useEvent } from './hooks'
+export { Listener } from './components'
 export { default as AppContext } from './context'

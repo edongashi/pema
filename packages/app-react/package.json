@@ -28,8 +28,7 @@
   },
   "dependencies": {
     "@pema/app": "^0.1.0",
-    "@pema/utils": "^0.1.0",
-    "lodash.get": "^4.4.2"
+    "@pema/utils": "^0.1.0"
   },
   "devDependencies": {
     "@types/lodash.get": "^4.4.6",

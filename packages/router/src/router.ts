@@ -228,8 +228,7 @@ export default class RouterImpl implements Router {
       return notFound
     }
 
-    const result = await controller.onEnter(params)
-    return await resolveActions(params, result, this.fallbackSetter) as ControllerAction
+    return await resolveActions(params, controller.onEnter, this.fallbackSetter) as ControllerAction
   }
 
   private async beforeEnter(
@@ -255,7 +254,7 @@ export default class RouterImpl implements Router {
     try {
       const controller = this.currentController
       if (controller && controller.beforeLeave) {
-        const action = await resolveActions(params, controller.beforeLeave(params), this.fallbackSetter)
+        const action = await resolveActions(params, controller.beforeLeave, this.fallbackSetter)
         if (this.terminate(action, callback)) {
           return
         }
