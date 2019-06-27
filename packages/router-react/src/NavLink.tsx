@@ -19,7 +19,7 @@ export const NavLink: FunctionComponent<NavLinkProps> = ({
 }) => {
   const current = useCurrentLocation()
   const className = current.router.isActive(props.to)
-    ? classNames('NavLink', 'NavLink--active', activeClassName, classNameProp)
+    ? classNames('NavLink', 'NavLink--active', activeClassName || 'active', classNameProp)
     : classNames('NavLink', classNameProp)
   return <Link className={className} {...props} />
 }
