@@ -41,9 +41,7 @@ function compilePath(path: string, options: {
   return result
 }
 
-function matchPath(pathname: string, path: string): Match | null
-function matchPath(pathname: string, options: MatchOptions): Match | null
-function matchPath(pathname: string, arg: string | MatchOptions): Match | null {
+export function matchPath(pathname: string, arg: string | MatchOptions): Match | null {
   if (typeof arg === 'string') {
     arg = { path: arg }
   }

@@ -39,6 +39,7 @@ import {
 import RouteCollection from './route-collection'
 import { error, allow } from './actions'
 import resolveActions from './resolve-actions'
+import { matchPath } from './match'
 
 interface ViewSetter {
   (fallback: FallbackView): void
@@ -522,6 +523,12 @@ export default class RouterImpl implements Router {
         }, [])
 
     return Promise.all(promises).then(noop)
+  }
+
+  isActive(path: Path): boolean {
+    const currentRoute = this.current.route
+    const { pathname } = toHistoryLocation(path, this.history.location)
+    return !!matchPath(pathname, currentRoute)
   }
 
   createHref(path: Path): string {

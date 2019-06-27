@@ -1,2 +1,3 @@
 export { useRouter } from './hooks'
-export { Link } from './components'
+export { Link, LinkProps } from './Link'
+export { NavLink, NavLinkProps } from './NavLink'

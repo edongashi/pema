@@ -158,6 +158,7 @@ export interface Router {
   goForward(): void
   scrollTo(href: string): void
   prefetch(path: Path): Promise<void>
+  isActive(path: Path): boolean
   createHref(path: Path): string
   registerRoutes(routes: RoutingTable): void
   dispose(): void
@@ -188,11 +189,14 @@ export interface KeyedRouteConfig extends RouteConfig {
   keyedRoutes?: KeyedRouteConfig[]
 }
 
-export interface MatchOptions {
-  path: string | string[]
+export interface MatchConfig {
   exact?: boolean
   strict?: boolean
   sensitive?: boolean
+}
+
+export interface MatchOptions extends MatchConfig {
+  path: string | string[]
 }
 
 export interface MatchedRoute {

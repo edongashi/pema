@@ -2,6 +2,7 @@
 
 import { Path } from '@pema/router'
 import { Dictionary } from '@pema/utils'
+import classNames from 'classnames'
 import React, { FunctionComponent, useEffect } from 'react'
 import { useRouter } from './hooks'
 
@@ -22,7 +23,7 @@ function dataSaving() {
   }
 }
 
-interface LinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
+export interface LinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
   to: Path
   replace?: boolean
   prefetch?: boolean
@@ -33,9 +34,11 @@ export const Link: FunctionComponent<LinkProps> = ({
   to,
   replace,
   prefetch,
+  className,
   innerRef,
   onClick,
-  ...props }) => {
+  ...props
+}) => {
   const router = useRouter()
   useEffect(() => {
     if (!dataSaving() && prefetch && (to || to === '')) {
@@ -48,6 +51,7 @@ export const Link: FunctionComponent<LinkProps> = ({
   return (
     <a
       {...props}
+      className={classNames('Link', className)}
       href={href}
       ref={innerRef}
       onClick={event => {
