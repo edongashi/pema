@@ -1,8 +1,6 @@
 import {
   Router,
   RouterState,
-  PathObject,
-  PathTuple,
   Path,
   Controller,
   RouterView,
@@ -421,10 +419,6 @@ export default class RouterImpl implements Router {
   view: RouterView
   current: RouterState
 
-  push(path: string): void
-  push(path: PathObject): void
-  push(path: PathTuple): void
-  push(path: Path): void
   push(path: Path): void {
     if (this.locked) {
       return
@@ -433,10 +427,6 @@ export default class RouterImpl implements Router {
     this.history.push(toHistoryLocation(path, this.history.location))
   }
 
-  replace(path: string): void
-  replace(path: PathObject): void
-  replace(path: PathTuple): void
-  replace(path: Path): void
   replace(path: Path): void {
     if (this.locked) {
       return
@@ -512,10 +502,6 @@ export default class RouterImpl implements Router {
     }
   }
 
-  prefetch(path: string): Promise<void>
-  prefetch(path: PathObject): Promise<void>
-  prefetch(path: PathTuple): Promise<void>
-  prefetch(path: Path): Promise<void>
   prefetch(path: Path): Promise<void> {
     const { pathname } = toHistoryLocation(path, this.history.location)
     const branch = this.routes.match(pathname)
@@ -538,10 +524,6 @@ export default class RouterImpl implements Router {
     return Promise.all(promises).then(noop)
   }
 
-  createHref(path: string): string
-  createHref(path: PathObject): string
-  createHref(path: PathTuple): string
-  createHref(path: Path): string
   createHref(path: Path): string {
     return this.history.createHref(toHistoryLocation(path, this.history.location))
   }

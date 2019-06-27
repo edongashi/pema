@@ -151,22 +151,14 @@ export interface RouterState extends ActionParams {
 export interface Router {
   readonly current: RouterState
   readonly view: RouterView
-  push(path: string): void
-  push(path: PathObject): void
-  push(path: PathTuple): void
-  replace(path: string): void
-  replace(path: PathObject): void
-  replace(path: PathTuple): void
+  push(path: Path): void
+  replace(path: Path): void
   reload(deep?: boolean): Promise<void>
   goBack(): void
   goForward(): void
   scrollTo(href: string): void
-  prefetch(path: string): Promise<void>
-  prefetch(path: PathObject): Promise<void>
-  prefetch(path: PathTuple): Promise<void>
-  createHref(path: string): string
-  createHref(path: PathObject): string
-  createHref(path: PathTuple): string
+  prefetch(path: Path): Promise<void>
+  createHref(path: Path): string
   registerRoutes(routes: RoutingTable): void
   dispose(): void
 }
