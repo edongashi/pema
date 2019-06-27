@@ -24,8 +24,10 @@
     "no-empty": false,
     "max-classes-per-file": false,
     "member-access": false,
+    "member-ordering": false,
     "jsx-no-lambda": false,
     "jsx-no-multiline-js": false,
+    "jsx-boolean-value": false,
     "space-before-function-paren": [
       true,
       {
