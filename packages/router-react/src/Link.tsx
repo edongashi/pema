@@ -10,19 +10,6 @@ function isModifiedEvent(event: React.MouseEvent) {
   return !!(event.metaKey || event.altKey || event.ctrlKey || event.shiftKey)
 }
 
-function dataSaving() {
-  if (process.env.NODE_ENV !== 'production') {
-    return false
-  }
-
-  const connection = (navigator && (navigator as Dictionary).connection) as Dictionary
-  if (connection) {
-    return connection.saveData || (connection.effectiveType || '').indexOf('2g') !== -1
-  } else {
-    return false
-  }
-}
-
 export interface LinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
   to: Path
   replace?: boolean
@@ -41,7 +28,7 @@ export const Link: FunctionComponent<LinkProps> = ({
 }) => {
   const router = useRouter()
   useEffect(() => {
-    if (!dataSaving() && prefetch && (to || to === '')) {
+    if (prefetch && (to || to === '')) {
       router.prefetch(to)
     }
   }, [router, to, prefetch])

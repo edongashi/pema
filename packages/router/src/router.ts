@@ -61,6 +61,19 @@ interface SessionType {
 const notFound = error(404)
 const forbidden = error(403)
 
+function dataSaving() {
+  if (process.env.NODE_ENV !== 'production') {
+    return false
+  }
+
+  const connection = (navigator && (navigator as Dictionary).connection) as Dictionary
+  if (connection) {
+    return connection.saveData || (connection.effectiveType || '').indexOf('2g') !== -1
+  } else {
+    return false
+  }
+}
+
 export default class RouterImpl implements Router {
   private readonly app: AppNode
   private readonly routes: RouteCollection
@@ -504,6 +517,10 @@ export default class RouterImpl implements Router {
   }
 
   prefetch(path: Path): Promise<void> {
+    if (dataSaving()) {
+      return Promise.resolve()
+    }
+
     const { pathname } = toHistoryLocation(path, this.history.location)
     const branch = this.routes.match(pathname)
     if (!branch || branch.length === 0) {
