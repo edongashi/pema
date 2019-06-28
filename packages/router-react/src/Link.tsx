@@ -1,7 +1,6 @@
 // Based on react-router. License https://github.com/ReactTraining/react-router/blob/master/LICENSE
 
 import { Path } from '@pema/router'
-import { Dictionary } from '@pema/utils'
 import classNames from 'classnames'
 import React, { FunctionComponent, useEffect } from 'react'
 import { useRouter } from './hooks'
