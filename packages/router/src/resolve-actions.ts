@@ -8,9 +8,10 @@ import {
   Computed
 } from './types'
 import { invariant, Dictionary } from '@pema/utils'
-import { error, allow, delay } from './actions'
+import { error, allow } from './actions'
 
 export default async function resolveActions(
+  callContext: any,
   arg: ActionParams,
   actions:
     | DelayedResult<void>
@@ -39,7 +40,7 @@ export default async function resolveActions(
       return await v
     }
 
-    const promise = v(arg, state)
+    const promise = v.call(callContext, arg, state)
     if (promise && typeof promise.then === 'function') {
       if (typeof fallback !== 'undefined') {
         setFallbackView(fallback)

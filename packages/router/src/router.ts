@@ -210,7 +210,7 @@ export default class RouterImpl implements Router {
       return allow()
     }
 
-    return await resolveActions(params, result, this.fallbackSetter)
+    return await resolveActions(view, params, result, this.fallbackSetter)
   }
 
   private async enterController
@@ -240,7 +240,7 @@ export default class RouterImpl implements Router {
       return notFound
     }
 
-    return await resolveActions(params, controller.onEnter, this.fallbackSetter) as ControllerAction
+    return await resolveActions(controller, params, controller.onEnter, this.fallbackSetter) as ControllerAction
   }
 
   private async beforeEnter(
@@ -266,7 +266,7 @@ export default class RouterImpl implements Router {
     try {
       const controller = this.currentController
       if (controller && controller.beforeLeave) {
-        const action = await resolveActions(params, controller.beforeLeave, this.fallbackSetter)
+        const action = await resolveActions(controller, params, controller.beforeLeave, this.fallbackSetter)
         if (this.terminate(action, callback)) {
           return
         }
@@ -274,7 +274,7 @@ export default class RouterImpl implements Router {
 
       const { route } = params
       if (route.beforeEnter) {
-        const action = await resolveActions(params, route.beforeEnter, this.fallbackSetter)
+        const action = await resolveActions(route, params, route.beforeEnter, this.fallbackSetter)
         if (this.terminate(action, callback)) {
           return
         }
@@ -377,7 +377,7 @@ export default class RouterImpl implements Router {
     }
 
     const routeAction = route.onEnter
-      ? await resolveActions(params, route.onEnter, this.fallbackSetter)
+      ? await resolveActions(route, params, route.onEnter, this.fallbackSetter)
       : notFound
 
     await enter(routeAction, null)
