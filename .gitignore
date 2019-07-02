@@ -3,6 +3,8 @@ lib/
 package-lock.json
 yarn.lock
 
+*.lerna_backup
+
 # Logs
 logs
 *.log
