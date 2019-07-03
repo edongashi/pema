@@ -29,11 +29,14 @@ export type RouterView =
   | { type: 'error', code: number, error?: ErrorLike }
   | null
 
-export type Computed<T, TParams extends ActionParams = ActionParams> = (params: TParams, state: Dictionary) => (T | Promise<T>)
+export type Computed<T, TParams extends ActionParams = ActionParams>
+  = (params: TParams, state: Dictionary) => (T | Promise<T>)
 
-export type Delayed<T, TParams extends ActionParams = ActionParams> = Promise<T> | Computed<T, TParams>
+export type Delayed<T, TParams extends ActionParams = ActionParams>
+  = Promise<T> | Computed<T, TParams>
 
-export type LazyResolver<T, TParams extends ActionParams = ActionParams> = () => Promise<T | DelayedResult<T, TParams>>
+export type LazyResolver<T, TParams extends ActionParams
+  = ActionParams> = () => Promise<T | DelayedResult<T, TParams>>
 
 type IsResult = { __result: true }
 
