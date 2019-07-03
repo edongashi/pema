@@ -201,16 +201,7 @@ export default class RouterImpl implements Router {
       this.app.extend(view.dependencies as any)
     }
 
-    if (!view.onEnter) {
-      return allow()
-    }
-
-    const result = view.onEnter
-    if (!result) {
-      return allow()
-    }
-
-    return await resolveActions(view, params, result, this.fallbackSetter)
+    return await resolveActions(view, params, view.onEnter, this.fallbackSetter)
   }
 
   private async enterController
@@ -235,11 +226,6 @@ export default class RouterImpl implements Router {
     }
 
     (state as Dictionary).controller = controller
-
-    if (typeof controller.onEnter !== 'function') {
-      return notFound
-    }
-
     return await resolveActions(controller, params, controller.onEnter, this.fallbackSetter) as ControllerAction
   }
 

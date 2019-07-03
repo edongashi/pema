@@ -14,13 +14,14 @@ export default async function resolveActions(
   callContext: any,
   arg: ActionParams,
   actions:
+    | void
     | DelayedResult<void>
     | Computed<void>
     | DelayableAction<AnyAction>
     | Array<DelayedResult<void> | Computed<void> | DelayableAction<AnyAction>>,
   setFallbackView: (view: FallbackView) => void): Promise<AnyAction> {
   if (!actions) {
-    actions = []
+    return allow()
   } else if (!Array.isArray(actions)) {
     actions = [actions]
   }
