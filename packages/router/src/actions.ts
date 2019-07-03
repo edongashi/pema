@@ -1,3 +1,4 @@
+import { ErrorLike, memoizeLazy, serializeError } from '@pema/utils'
 import {
   AllowResult,
   ControllerConstructor,
@@ -20,7 +21,6 @@ import {
   ActionParams,
   ControllerAction
 } from './types'
-import { mapLazy, memoizeLazy, serializeError, ErrorLike } from '@pema/utils'
 
 export function delay
   <T, TParams extends ActionParams = ActionParams>
@@ -44,19 +44,6 @@ export function lazy
   }
 }
 
-export function lazyView<TView extends View>
-  (resolver: (() => Promise<TView>), fallback?: FallbackView) {
-  return lazy(mapLazy(resolver, view), fallback)
-}
-
-export function lazyController<TController extends ControllerConstructor>
-  (resolver: (() => Promise<TController>), fallback?: FallbackView) {
-  return lazy(mapLazy(resolver, controller), fallback)
-}
-
-lazy.view = lazyView
-lazy.controller = lazyController
-
 export function view(view: View): ViewResult {
   return {
     __result: true,
@@ -64,8 +51,6 @@ export function view(view: View): ViewResult {
     view
   }
 }
-
-view.lazy = lazyView
 
 export function error(code: number, error?: ErrorLike): ErrorResult {
   return {
@@ -93,8 +78,6 @@ export function controller<T extends ControllerConstructor>
     defaultAction
   }
 }
-
-controller.lazy = lazyController
 
 export function allow(): AllowResult {
   return {
