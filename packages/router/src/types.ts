@@ -62,10 +62,11 @@ export type LazyResult<T, TParams extends ActionParams = ActionParams>
   = IsResult & { type: 'lazy', value: LazyResolver<T, TParams>, fallback?: FallbackView }
 
 export type ControllerAction =
+  | AllowResult
   | DenyResult
-  | ViewResult
   | RedirectResult
   | ErrorResult
+  | ViewResult
 
 export type ViewAction =
   | AllowResult
@@ -80,30 +81,31 @@ export type TransitionAction =
   | ErrorResult
 
 export type RouteAction =
-  | ViewResult
+  | AllowResult
+  | DenyResult
   | RedirectResult
-  | ControllerResult
   | ErrorResult
+  | ViewResult
+  | ControllerResult
 
-export type AnyAction =
-  | ControllerAction
-  | ViewAction
-  | TransitionAction
-  | RouteAction
+export type AnyAction = RouteAction
+
+type SingleOrArray<T> = T | T[]
+
+type OnEnterHandler<TAction extends AnyAction, TProps extends ActionParams> =
+  SingleOrArray<
+    | DelayableAction<TAction, TProps>
+    | DelayedResult<void, TProps>
+    | Computed<void, TProps>>
 
 export type DelayableAction<T extends AnyAction, TParams extends ActionParams = ActionParams>
   = T | Computed<T, TParams> | DelayedResult<T, TParams> | LazyResult<T, TParams>
 
 export type FallbackView = any
 
-type SingleOrArray<T> = T | T[]
-
 export interface View<TProps extends ActionParams = ActionParams> {
   dependencies?: ServiceDependencies
-  onEnter?: SingleOrArray<
-    | DelayableAction<ViewAction, TProps>
-    | DelayedResult<void, TProps>
-    | Computed<void, TProps>>
+  onEnter?: OnEnterHandler<ViewAction, TProps>
   [key: string]: any
 }
 
@@ -113,13 +115,13 @@ export interface ControllerConstructor<TController extends ControllerBase = Cont
 }
 
 export interface ControllerBase {
-  onEnter: DelayableAction<ControllerAction, any> | DelayableAction<AnyAction, any>[]
+  onEnter?: OnEnterHandler<ControllerAction, any>
   beforeLeave?: DelayableAction<TransitionAction, any>
   onLeave?(params: any): void
 }
 
 export interface Controller<TProps extends ActionParams = ActionParams> extends ControllerBase {
-  onEnter: DelayableAction<ControllerAction, TProps> | DelayableAction<AnyAction, TProps>[]
+  onEnter?: OnEnterHandler<ControllerAction, TProps>
   beforeLeave?: DelayableAction<TransitionAction, TProps>
   onLeave?(params: TProps): void
 }
@@ -179,7 +181,7 @@ export interface RouteConfig {
   stateless?: boolean
   routes?: RoutingTable
   beforeEnter?: DelayableAction<TransitionAction> | DelayableAction<AnyAction>[]
-  onEnter?: DelayableAction<RouteAction> | DelayableAction<AnyAction>[]
+  onEnter?: SingleOrArray<DelayableAction<RouteAction>>
   [key: string]: any
 }
 
