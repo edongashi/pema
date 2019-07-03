@@ -340,7 +340,12 @@ export default class RouterImpl implements Router {
               return
             }
 
-            await enter(await this.enterController(action.controller, params, state), null)
+            let result = await this.enterController(action.controller, params, state)
+            if (result.type === 'allow' && action.defaultAction) {
+              result = action.defaultAction
+            }
+
+            await enter(result, null)
             return
           case 'view':
             if (routerView) {

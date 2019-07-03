@@ -50,7 +50,7 @@ export type ErrorResult
   = IsResult & { type: 'error', code: number, error?: ErrorLike }
 
 export type ControllerResult
-  = IsResult & { type: 'controller', controller: ControllerConstructor }
+  = IsResult & { type: 'controller', controller: ControllerConstructor, defaultAction?: ControllerAction }
 
 export type AllowResult
   = IsResult & { type: 'allow' }
