@@ -17,7 +17,8 @@ import {
   RoutingTable,
   DelayableAction,
   AnyAction,
-  ActionParams
+  ActionParams,
+  ControllerAction
 } from './types'
 import { mapLazy, memoizeLazy, serializeError, ErrorLike } from '@pema/utils'
 
@@ -83,11 +84,13 @@ export function redirect(path: Path): RedirectResult {
   }
 }
 
-export function controller<T extends ControllerConstructor>(ctor: T): ControllerResult {
+export function controller<T extends ControllerConstructor>
+  (ctor: T, defaultAction?: ControllerAction): ControllerResult {
   return {
     __result: true,
     type: 'controller',
-    controller: ctor
+    controller: ctor,
+    defaultAction
   }
 }
 
