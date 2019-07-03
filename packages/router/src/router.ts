@@ -535,6 +535,10 @@ export default class RouterImpl implements Router {
 
   isActive(path: Path): boolean {
     const currentRoute = this.current.route
+    if (currentRoute.isError) {
+      return false
+    }
+
     const { pathname } = toHistoryLocation(path, this.history.location)
     return !!matchPath(pathname, currentRoute)
   }

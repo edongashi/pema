@@ -54,7 +54,8 @@ export default class RouteCollection {
       id: '@/',
       path: '/',
       onEnter: error(404),
-      stateless: true
+      stateless: true,
+      isError: true
     }
 
     if (routes) {
