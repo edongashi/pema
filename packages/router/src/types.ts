@@ -189,6 +189,7 @@ export interface RouteConfig {
   routes?: RoutingTable
   beforeEnter?: DelayableAction<TransitionAction> | DelayableAction<AnyAction>[]
   onEnter?: SingleOrArray<DelayableAction<RouteAction>>
+  isError?: boolean
   [key: string]: any
 }
 
