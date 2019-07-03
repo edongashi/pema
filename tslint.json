@@ -21,6 +21,7 @@
     "no-console": false,
     "interface-name": false,
     "only-arrow-functions": false,
+    "ordered-imports": false,
     "no-empty": false,
     "max-classes-per-file": false,
     "member-access": false,
@@ -28,13 +29,6 @@
     "jsx-no-lambda": false,
     "jsx-no-multiline-js": false,
     "jsx-boolean-value": false,
-    "space-before-function-paren": [
-      true,
-      {
-        "anonymous": "always",
-        "named": "never",
-        "asyncArrow": "always"
-      }
-    ]
+    "space-before-function-paren": false
   }
 }

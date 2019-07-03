@@ -108,7 +108,7 @@ export type FallbackView = any
 
 export interface View<TProps extends ActionParams = ActionParams> {
   dependencies?: ServiceDependencies
-  onEnter?: OnEnterHandler<ViewAction, TProps>
+  onEnter?: OnEnterHandler<ViewAction, PickActionParams<TProps>>
   [key: string]: any
 }
 
@@ -124,8 +124,8 @@ export interface ControllerBase {
 }
 
 export interface Controller<TProps extends ActionParams = ActionParams> extends ControllerBase {
-  onEnter?: OnEnterHandler<ControllerAction, TProps>
-  beforeLeave?: DelayableAction<TransitionAction, TProps>
+  onEnter?: OnEnterHandler<ControllerAction, PickActionParams<TProps>>
+  beforeLeave?: DelayableAction<TransitionAction, PickActionParams<TProps>>
   onLeave?(params: TProps): void
 }
 
@@ -148,6 +148,10 @@ export interface ActionParams<TApp extends AppNode = AppNode> {
   readonly router: Router
   readonly app: TApp
 }
+
+export type OmitActionParams<T extends ActionParams> = Omit<T, keyof ActionParams>
+
+export type PickActionParams<T extends ActionParams> = Pick<T, keyof ActionParams>
 
 export interface RouterState extends ActionParams {
   readonly controller: Controller | null
