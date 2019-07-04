@@ -65,7 +65,6 @@ export default async function resolveActions(
     }
 
     if (typeof action === 'object' && action.type === 'lazy') {
-
       try {
         const promise = action.value()
         if (!(promise as any).resolved && typeof action.fallback !== 'undefined') {
