@@ -410,7 +410,7 @@ export default class RouterImpl implements Router {
     this.controllersPath = env.controllersPath || 'controllers'
     this.fallbackComputed = typeof env.fallbackComputed !== 'undefined'
       ? env.fallbackComputed
-      : true
+      : false
     this.routes = new RouteCollection(env.routes)
     this.session = (state.session as SessionType) || {}
     const history = env.createHistory({
