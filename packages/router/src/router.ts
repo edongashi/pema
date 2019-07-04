@@ -321,11 +321,13 @@ export default class RouterImpl implements Router {
     }
 
     this.locked = true
+    this.app.emit('router.onEnter')
 
     const finalize = (view: RouterView | null) => {
       this.setView(view || notFound)
       this.locked = false
       this.emitCurrent(previous)
+      this.app.emit('router.afterEnter')
     }
 
     if (!params.shallow && previous.controller && previous.controller.onLeave) {
