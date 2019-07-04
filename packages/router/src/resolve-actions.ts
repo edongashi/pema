@@ -10,11 +10,6 @@ import {
 import { invariant, Dictionary } from '@pema/utils'
 import { error, allow } from './actions'
 
-interface SetFallbackView {
-  (view: FallbackView): void
-  cancel(): void
-}
-
 export default async function resolveActions(
   callContext: any,
   arg: ActionParams,
@@ -24,14 +19,12 @@ export default async function resolveActions(
     | Computed<void>
     | DelayableAction<AnyAction>
     | Array<DelayedResult<void> | Computed<void> | DelayableAction<AnyAction>>,
-  setFallbackView: SetFallbackView) {
+  setFallbackView: (view: FallbackView) => void): Promise<AnyAction> {
   if (!actions) {
     return allow()
   } else if (!Array.isArray(actions)) {
     actions = [actions]
   }
-
-  let hasFallback = false
 
   let state: Dictionary = {}
   async function resolveDelayed<T>(value: Delayed<T>, fallback: FallbackView | undefined): Promise<T> {
@@ -42,7 +35,6 @@ export default async function resolveActions(
 
     if (typeof v.then === 'function') {
       if (typeof fallback !== 'undefined') {
-        hasFallback = true
         setFallbackView(fallback)
       }
 
@@ -52,19 +44,12 @@ export default async function resolveActions(
     const promise = v.call(callContext, arg, state)
     if (promise && typeof promise.then === 'function') {
       if (typeof fallback !== 'undefined') {
-        hasFallback = true
         setFallbackView(fallback)
       }
 
       return await promise
     } else {
       return promise
-    }
-  }
-
-  function cancel() {
-    if (hasFallback) {
-      setFallbackView.cancel()
     }
   }
 
@@ -82,21 +67,19 @@ export default async function resolveActions(
       try {
         action = await action.value()
       } catch (e) {
-        cancel()
         return error(500, e)
       }
     }
 
     if (typeof action === 'function') {
       try {
-        const result = await resolveDelayed(action as Computed<AnyAction | void>, true)
+        const result = await resolveDelayed(action as Computed<AnyAction | void>, undefined)
         if (!result) {
           continue
         }
 
         action = result
       } catch (e) {
-        cancel()
         return error(500, e)
       }
     }
@@ -106,7 +89,6 @@ export default async function resolveActions(
       try {
         resolvedAction = await resolveDelayed<AnyAction | void>(action.value, action.fallback)
       } catch (e) {
-        cancel()
         return error(500, e)
       }
     } else {
@@ -115,11 +97,9 @@ export default async function resolveActions(
     }
 
     if (resolvedAction && resolvedAction.type !== 'allow') {
-      cancel()
       return resolvedAction
     }
   }
 
-  cancel()
   return allow()
 }

@@ -37,7 +37,7 @@ import {
   isOnlyHashChange
 } from './url-utils'
 import RouteCollection from './route-collection'
-import { error } from './actions'
+import { error, allow } from './actions'
 import resolveActions from './resolve-actions'
 import { matchPath } from './match'
 
