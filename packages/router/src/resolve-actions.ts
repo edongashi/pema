@@ -19,7 +19,12 @@ export default async function resolveActions(
     | Computed<void>
     | DelayableAction<AnyAction>
     | Array<DelayedResult<void> | Computed<void> | DelayableAction<AnyAction>>,
-  setFallbackView: (view: FallbackView) => void): Promise<AnyAction> {
+  setFallbackView: (view: FallbackView) => void,
+  fallbackComputed: boolean | undefined): Promise<AnyAction> {
+  if (!fallbackComputed) {
+    fallbackComputed = undefined
+  }
+
   if (!actions) {
     return allow()
   } else if (!Array.isArray(actions)) {
@@ -27,14 +32,14 @@ export default async function resolveActions(
   }
 
   let state: Dictionary = {}
-  async function resolveDelayed<T>(value: Delayed<T>, fallback: FallbackView | undefined): Promise<T> {
+  async function resolveDelayed<T>(value: Delayed<T>, fallback: FallbackView): Promise<T> {
     const v = value as any
     if (!v) {
       return v
     }
 
     if (typeof v.then === 'function') {
-      if (typeof fallback !== 'undefined') {
+      if (!v.resolved && typeof fallback !== 'undefined') {
         setFallbackView(fallback)
       }
 
@@ -43,7 +48,7 @@ export default async function resolveActions(
 
     const promise = v.call(callContext, arg, state)
     if (promise && typeof promise.then === 'function') {
-      if (typeof fallback !== 'undefined') {
+      if (!promise.resolved && typeof fallback !== 'undefined') {
         setFallbackView(fallback)
       }
 
@@ -60,12 +65,14 @@ export default async function resolveActions(
     }
 
     if (typeof action === 'object' && action.type === 'lazy') {
-      if (typeof action.fallback !== 'undefined') {
-        setFallbackView(action.fallback)
-      }
 
       try {
-        action = await action.value()
+        const promise = action.value()
+        if (!(promise as any).resolved && typeof action.fallback !== 'undefined') {
+          setFallbackView(action.fallback)
+        }
+
+        action = await promise
       } catch (e) {
         return error(500, e)
       }
@@ -73,7 +80,7 @@ export default async function resolveActions(
 
     if (typeof action === 'function') {
       try {
-        const result = await resolveDelayed(action as Computed<AnyAction | void>, undefined)
+        const result = await resolveDelayed(action as Computed<AnyAction | void>, fallbackComputed)
         if (!result) {
           continue
         }

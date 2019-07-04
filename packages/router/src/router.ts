@@ -82,6 +82,7 @@ export default class RouterImpl implements Router {
   private readonly unblock: () => void
   private readonly unlisten: () => void
   private readonly fallbackSetter: ViewSetter
+  private readonly fallbackComputed: boolean
 
   private readonly session: SessionType
   private locked: boolean = false
@@ -201,7 +202,12 @@ export default class RouterImpl implements Router {
       this.app.extend(view.dependencies as any)
     }
 
-    return await resolveActions(view, params, view.onEnter, this.fallbackSetter)
+    return await resolveActions(
+      view,
+      params,
+      view.onEnter,
+      this.fallbackSetter,
+      this.fallbackComputed)
   }
 
   private async enterController
@@ -226,7 +232,12 @@ export default class RouterImpl implements Router {
     }
 
     (state as Dictionary).controller = controller
-    return await resolveActions(controller, params, controller.onEnter, this.fallbackSetter) as ControllerAction
+    return await resolveActions(
+      controller,
+      params,
+      controller.onEnter,
+      this.fallbackSetter,
+      this.fallbackComputed) as ControllerAction
   }
 
   private async beforeEnter(
@@ -252,7 +263,12 @@ export default class RouterImpl implements Router {
     try {
       const controller = this.currentController
       if (controller && controller.beforeLeave) {
-        const action = await resolveActions(controller, params, controller.beforeLeave, this.fallbackSetter)
+        const action = await resolveActions(
+          controller,
+          params,
+          controller.beforeLeave,
+          this.fallbackSetter,
+          this.fallbackComputed)
         if (this.terminate(action, callback)) {
           return
         }
@@ -260,7 +276,12 @@ export default class RouterImpl implements Router {
 
       const { route } = params
       if (route.beforeEnter) {
-        const action = await resolveActions(route, params, route.beforeEnter, this.fallbackSetter)
+        const action = await resolveActions(
+          route,
+          params,
+          route.beforeEnter,
+          this.fallbackSetter,
+          this.fallbackComputed)
         if (this.terminate(action, callback)) {
           return
         }
@@ -368,7 +389,12 @@ export default class RouterImpl implements Router {
     }
 
     const routeAction = route.onEnter
-      ? await resolveActions(route, params, route.onEnter, this.fallbackSetter)
+      ? await resolveActions(
+        route,
+        params,
+        route.onEnter,
+        this.fallbackSetter,
+        this.fallbackComputed)
       : notFound
 
     await enter(routeAction, null)
@@ -380,6 +406,9 @@ export default class RouterImpl implements Router {
     this.view = null
     this.app = app
     this.controllersPath = env.controllersPath || 'controllers'
+    this.fallbackComputed = typeof env.fallbackComputed !== 'undefined'
+      ? env.fallbackComputed
+      : true
     this.routes = new RouteCollection(env.routes)
     this.session = (state.session as SessionType) || {}
     const history = env.createHistory({

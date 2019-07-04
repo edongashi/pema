@@ -226,4 +226,5 @@ export interface RouterEnv {
   historyProps?: AppOptions<HistoryBuildOptions>
   controllersPath?: string
   fallbackDelay?: number
+  fallbackComputed?: boolean
 }
