@@ -2,13 +2,14 @@
   "name": "root",
   "private": true,
   "scripts": {
-    "build": "lerna run tsc",
-    "publish": "lerna run tsc && lerna publish"
+    "build": "lerna run build",
+    "tsc": "lerna run tsc"
   },
   "devDependencies": {
     "@types/node": "^12.6.0",
     "lerna": "^3.15.0",
     "react": "^16.8.6",
+    "rimraf": "^2.6.3",
     "typescript": "^3.5.2"
   }
 }
