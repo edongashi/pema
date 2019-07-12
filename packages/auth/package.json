@@ -26,5 +26,8 @@
   },
   "bugs": {
     "url": "https://github.com/edongashi/pema/issues"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
