@@ -1,5 +1,6 @@
 {
   "name": "@pema/session",
+  "private": true,
   "version": "0.1.0",
   "description": "> TODO: description",
   "author": "Edon Gashi <edon.gashi@uni-pr.edu>",

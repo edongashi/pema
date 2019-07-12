@@ -1,5 +1,6 @@
 {
   "name": "@pema/router",
+  "private": false,
   "version": "0.1.0",
   "description": "> TODO: description",
   "author": "Edon Gashi <edon.gashi@uni-pr.edu>",
