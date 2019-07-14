@@ -137,7 +137,7 @@ export interface Location extends PathObject {
 
 export interface ActionParams<TApp extends AppNode = AppNode> {
   readonly action: 'PUSH' | 'REPLACE' | 'POP'
-  readonly location: PathObject
+  readonly location: Location
   readonly href: string
   readonly match: Match
   readonly route: KeyedRouteConfig
