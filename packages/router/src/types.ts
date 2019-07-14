@@ -149,9 +149,16 @@ export interface ActionParams<TApp extends AppNode = AppNode> {
   readonly app: TApp
 }
 
-export type OmitActionParams<T extends ActionParams> = Omit<T, keyof ActionParams>
+interface WithController {
+  controller: any
+}
 
-export type PickActionParams<T extends ActionParams> = Pick<T, keyof ActionParams>
+export type OmitActionParams<T extends ActionParams>
+  = Omit<T, keyof (ActionParams & WithController)>
+
+export type PickActionParams<T extends ActionParams> = T extends WithController
+  ? Pick<T, keyof (ActionParams & WithController)>
+  : Pick<T, keyof ActionParams>
 
 export interface RouterState extends ActionParams {
   readonly controller: Controller | null
