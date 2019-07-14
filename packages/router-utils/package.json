@@ -29,7 +29,7 @@
     "url": "https://github.com/edongashi/pema/issues"
   },
   "dependencies": {
-    "@pema/utils": "^0.1.0-alpha.1",
+    "@pema/utils": "^0.1.0-alpha.2",
     "hi-base32": "^0.5.0"
   },
   "publishConfig": {
