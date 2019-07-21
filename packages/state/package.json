@@ -28,6 +28,10 @@
   "bugs": {
     "url": "https://github.com/edongashi/pema/issues"
   },
+  "dependencies": {
+    "@pema/app": "^0.1.0-alpha.2",
+    "@pema/utils": "^0.1.0-alpha.2"
+  },
   "publishConfig": {
     "access": "public"
   }
