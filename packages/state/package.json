@@ -1,5 +1,5 @@
 {
-  "name": "@pema/auth",
+  "name": "@pema/state",
   "private": true,
   "version": "0.1.0-alpha.2",
   "description": "> TODO: description",
@@ -18,7 +18,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/edongashi/pema.git",
-    "directory": "packages/auth"
+    "directory": "packages/state"
   },
   "scripts": {
     "build": "rimraf ./lib && tsc",
