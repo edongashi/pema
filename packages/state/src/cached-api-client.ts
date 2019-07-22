@@ -1,6 +1,6 @@
 import { AppNode } from '@pema/app'
 import { matchResource } from './match-resource'
-import { Action, ApiClient, Query, QueryOptions } from './types'
+import { Action, ApiClient, Query, QueryOptions, OptimisticUpdateMap } from './types'
 
 interface App extends AppNode {
   progress?: {
@@ -12,6 +12,10 @@ interface App extends AppNode {
 interface CacheItem {
   expires: number | false
   value: any
+}
+
+export interface UpdateMap {
+  [resource: string]: (context: any) => any
 }
 
 export class CachedApiClient implements ApiClient {
@@ -31,7 +35,7 @@ export class CachedApiClient implements ApiClient {
     const { app, cache } = this
     if (resources === '*') {
       this.cache = new Map()
-      app.emit('refetch', '*')
+      app.emit('apiClient.refetch', '*')
       return
     }
 
@@ -58,7 +62,23 @@ export class CachedApiClient implements ApiClient {
     }
 
     for (const pattern of resources) {
-      app.emit('refetch', pattern)
+      app.emit('apiClient.refetch', pattern)
+    }
+  }
+
+  refetch(resources: string[] | string) {
+    if (!resources) {
+      return
+    }
+
+    const { app } = this
+    if (typeof resources === 'string') {
+      app.emit('apiClient.refetch', resources)
+    } else {
+      const resourcesLength = resources.length
+      for (let i = 0; i < resourcesLength; i++) {
+        app.emit('apiClient.refetch', resources[i])
+      }
     }
   }
 
@@ -125,22 +145,75 @@ export class CachedApiClient implements ApiClient {
 
   async action<TParams, TResult>
     (action: Action<TParams, TResult>, params: TParams): Promise<TResult> {
+    const apiClient = this
     const { app } = this
     const progress = action.progress ? app.progress : null
     if (progress) {
       progress.start()
     }
 
+    function runHook(map: UpdateMap | ((ctx: any) => UpdateMap) | void, additionalProps: {}) {
+      if (!map) {
+        return
+      }
+
+      const baseContext = {
+        params,
+        app,
+        apiClient,
+        action,
+        ...additionalProps
+      }
+
+      if (typeof map === 'function') {
+        map = map(baseContext)
+        if (!map) {
+          return
+        }
+      }
+
+      // tslint:disable-next-line: forin
+      for (const resource in map) {
+        const update = map[resource]
+        function wrapper(value: any) {
+          const mappedValue = update({
+            ...baseContext,
+            resource,
+            value,
+          })
+
+          if (typeof mappedValue === 'undefined') {
+            return value
+          } else {
+            return mappedValue
+          }
+        }
+
+        if (typeof update === 'function') {
+          app.emit('apiClient.map', resource, wrapper)
+        }
+      }
+    }
+
     try {
+      runHook(action.optimistic, {})
       const result = await action.perform(params, app)
+      runHook(action.onSuccess, { result })
       if (action.invalidates) {
         const resources = typeof action.invalidates === 'function'
-          ? action.invalidates(params, app)
+          ? action.invalidates({ params, app, apiClient, action, result })
           : action.invalidates
         this.invalidate(resources)
       }
 
       return result
+    } catch (error) {
+      runHook(action.onError, { error })
+      if (action.optimistic) {
+        this.refetch(Object.keys(action.optimistic))
+      }
+
+      throw error
     } finally {
       if (progress) {
         progress.done()

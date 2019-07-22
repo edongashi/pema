@@ -39,14 +39,32 @@ export function useQuery<TResult>
   // Invalidation
   const resourceId = query.resource || '*'
   useEffect(() => {
-    function handler(pattern: string) {
-      if (matchResource(pattern, resourceId)) {
+    // Refetching
+    function refetchHandler(pattern: string) {
+      if (!state.loading && matchResource(pattern, resourceId)) {
         refetch()
       }
     }
 
-    app.events.on('refetch', handler)
-    return () => app.events.off('refetch', handler)
+    function mapHandler(pattern: string, map: (value: TResult) => TResult) {
+      if (!state.loading && !state.error && matchResource(pattern, resourceId)) {
+        setState({
+          data: map(state.data),
+          loading: false,
+          error: false
+        })
+      }
+    }
+
+    app.events.on('apiClient.refetch', refetchHandler)
+    app.events.on('apiClient.map', mapHandler)
+
+    function dispose() {
+      app.events.off('apiClient.refetch', refetchHandler)
+      app.events.off('apiClient.map', refetchHandler)
+    }
+
+    return dispose
   }, [app, resourceId])
 
   // Polling
@@ -80,7 +98,7 @@ export function useQuery<TResult>
     }, pollInterval)
 
     return () => clearInterval(intervalId)
-  }, [pollInterval, pollCache])
+  }, [tick, pollInterval, pollCache])
 
   // Fetching
   useDeepCompareEffect(() => {
