@@ -41,18 +41,16 @@ export function useQuery<TResult>
   useEffect(() => {
     // Refetching
     function refetchHandler(pattern: string) {
-      if (!state.loading && matchResource(pattern, resourceId)) {
+      if (matchResource(pattern, resourceId)) {
         refetch()
       }
     }
 
     function mapHandler(pattern: string, map: (value: TResult) => TResult) {
-      if (!state.loading && !state.error && matchResource(pattern, resourceId)) {
-        setState({
-          data: map(state.data),
-          loading: false,
-          error: false
-        })
+      if (matchResource(pattern, resourceId)) {
+        setState(current => (current.loading || current.error)
+          ? current
+          : { data: map(current.data), loading: false, error: false })
       }
     }
 
