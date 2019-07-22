@@ -1,3 +1,10 @@
+export interface QueryErrorContext<TResult = any> {
+  error: any
+  app: any
+  apiClient: ApiClient
+  query: Query<TResult>
+}
+
 export interface Query<TResult> {
   readonly resource?: string
   readonly cache?: boolean | number
@@ -5,6 +12,7 @@ export interface Query<TResult> {
   readonly params?: {}
   readonly pollInterval?: number
   readonly pollCache?: boolean
+  readonly onError?: (context: QueryErrorContext<TResult>) => void
   fetch(app: any): Promise<TResult>
 }
 
@@ -73,6 +81,7 @@ export interface Action<TParams = void, TResult = void> {
 
 export interface QueryOptions {
   allowProgress?: boolean
+  allowErrorCallback?: boolean
   lookupCache?: boolean
 }
 

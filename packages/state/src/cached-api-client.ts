@@ -104,6 +104,7 @@ export class CachedApiClient implements ApiClient {
   async query<TResult>(query: Query<TResult>, options: QueryOptions = {}): Promise<TResult> {
     const {
       allowProgress = false,
+      allowErrorCallback = true,
       lookupCache = true
     } = options
 
@@ -136,6 +137,14 @@ export class CachedApiClient implements ApiClient {
       }
 
       return result
+    } catch (error) {
+      if (allowErrorCallback && query.onError) {
+        query.onError({
+          apiClient: this
+        })
+      }
+
+      throw error
     } finally {
       if (progress) {
         progress.done()

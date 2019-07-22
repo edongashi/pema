@@ -3,25 +3,20 @@ import { ApiClient, Action, Query, matchResource } from '@pema/state'
 import { useApp } from '@pema/app-react'
 import { useEffect, useState } from 'react'
 import useDeepCompareEffect from 'use-deep-compare-effect'
+import { QueryState, QueryResult, UseQueryOptions } from './types'
 
 interface App extends AppNode {
   apiClient: ApiClient
 }
 
-interface QueryState<TResult> {
-  data: TResult
-  loading: boolean
-  error: boolean
-}
-
-interface QueryResult<TResult> extends QueryState<TResult> {
-  refetch(): void
-}
-
 const noParams = {}
 
 export function useQuery<TResult>
-  (query: Query<TResult>): QueryResult<TResult> {
+  (query: Query<TResult>, options: UseQueryOptions = {}): QueryResult<TResult> {
+  const {
+    active = true,
+    allowPolling = true
+  } = options
   const app = useApp<App>()
   const [tick, setTick] = useState(0)
 
@@ -68,7 +63,7 @@ export function useQuery<TResult>
   // Polling
   const { pollInterval, pollCache = false } = query
   useEffect(() => {
-    if (typeof pollInterval !== 'number' || pollInterval <= 0) {
+    if (!active || !allowPolling || typeof pollInterval !== 'number' || pollInterval <= 0) {
       return
     }
 
@@ -96,10 +91,14 @@ export function useQuery<TResult>
     }, pollInterval)
 
     return () => clearInterval(intervalId)
-  }, [tick, pollInterval, pollCache])
+  }, [active, allowPolling, tick, pollInterval, pollCache])
 
   // Fetching
   useDeepCompareEffect(() => {
+    if (!active) {
+      return
+    }
+
     async function fetch() {
       try {
         const data = await app.apiClient.query(query, {
@@ -122,13 +121,14 @@ export function useQuery<TResult>
     }
 
     fetch()
-  }, [tick, query.params || noParams])
+  }, [active, tick, query.params || noParams])
 
   return {
     data: state.data,
     loading: state.loading,
     error: state.error,
-    refetch
+    refetch,
+    ready: !state.loading && !state.error
   }
 }
 
