@@ -1,7 +1,6 @@
 import { AppNode } from '@pema/app'
-import { Dictionary } from '@pema/utils'
+import { matchResource } from './match-resource'
 import { Action, ApiClient, Query, QueryOptions } from './types'
-import { normalizeResource } from './resource-utils'
 
 interface App extends AppNode {
   progress?: {
@@ -15,17 +14,13 @@ interface CacheItem {
   value: any
 }
 
-function asKey(id: string) {
-  return id === '*' ? '__ROOT__' : id
-}
-
 export class CachedApiClient implements ApiClient {
   private readonly app: App
-  private cache: Dictionary<Map<string, CacheItem>>
+  private cache: Map<string, CacheItem>
 
   constructor(todo: any, app: App) {
     this.app = app
-    this.cache = {}
+    this.cache = new Map()
   }
 
   invalidate(resources: string[] | string) {
@@ -33,9 +28,9 @@ export class CachedApiClient implements ApiClient {
       return
     }
 
-    const { app } = this
+    const { app, cache } = this
     if (resources === '*') {
-      this.cache = {}
+      this.cache = new Map()
       app.emit('refetch', '*')
       return
     }
@@ -44,20 +39,26 @@ export class CachedApiClient implements ApiClient {
       resources = [resources]
     }
 
-    const paths = resources.map(normalizeResource)
-    for (const [type, id] of paths) {
-      const map = this.cache[type]
-      if (map) {
-        if (id === '*') {
-          map.clear()
-        } else {
-          map.delete(id)
+    const now = Date.now()
+    const resourcesLength = resources.length
+    const entries = cache.entries()
+    // Todo: organize cache in tree for performance
+    for (const [key, value] of entries) {
+      if (value.expires && now >= value.expires) {
+        cache.delete(key)
+        continue
+      }
+
+      for (let i = 0; i < resourcesLength; i++) {
+        if (matchResource(resources[i], key)) {
+          cache.delete(key)
+          break
         }
       }
     }
 
-    for (const [type, id] of paths) {
-      app.emit('refetch', type + '/' + id)
+    for (const pattern of resources) {
+      app.emit('refetch', pattern)
     }
   }
 
@@ -66,17 +67,11 @@ export class CachedApiClient implements ApiClient {
       return undefined
     }
 
-    const [type, id] = normalizeResource(query.resource)
-    const map = this.cache[type]
-    if (!map) {
-      return undefined
-    }
-
-    const key = asKey(id)
-    const item = map.get(key)
+    const { cache } = this
+    const item = cache.get(query.resource)
     if (item) {
       if (item.expires && Date.now() >= item.expires) {
-        map.delete(key)
+        cache.delete(query.resource)
         return undefined
       }
 
@@ -112,15 +107,7 @@ export class CachedApiClient implements ApiClient {
       }
 
       if (query.cache && query.resource) {
-        const [type, id] = normalizeResource(query.resource)
-        let map = this.cache[type]
-        if (!map) {
-          map = new Map<string, CacheItem>()
-          this.cache[type] = map
-        }
-
-        const key = asKey(id)
-        map.set(key, {
+        this.cache.set(query.resource, {
           value: result,
           expires: query.cache === true
             ? false
