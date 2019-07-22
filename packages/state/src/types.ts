@@ -8,7 +8,7 @@ export interface Query<TResult> {
   fetch(app: any): Promise<TResult>
 }
 
-export interface Action<TParams, TResult> {
+export interface Action<TParams = void, TResult = void> {
   readonly invalidates?: string[] | ((params: TParams, app: any) => string[])
   readonly progress?: boolean
   perform(params: TParams, app: any): Promise<TResult>
