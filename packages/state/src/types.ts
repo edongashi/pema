@@ -14,9 +14,14 @@ export interface Action<TParams = void, TResult = void> {
   perform(params: TParams, app: any): Promise<TResult>
 }
 
+export interface QueryOptions {
+  allowProgress?: boolean
+  lookupCache?: boolean
+}
+
 export interface ApiClient {
   invalidate(resources: string[] | string): void
   lookup<TResult>(query: Query<TResult>): TResult | undefined
-  query<TResult>(query: Query<TResult>, lookup?: boolean): Promise<TResult>
+  query<TResult>(query: Query<TResult>, options?: QueryOptions): Promise<TResult>
   action<TParams, TResult>(action: Action<TParams, TResult>, params: TParams): Promise<TResult>
 }

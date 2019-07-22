@@ -1,6 +1,6 @@
 import { AppNode } from '@pema/app'
 import { Dictionary } from '@pema/utils'
-import { Action, ApiClient, Query } from './types'
+import { Action, ApiClient, Query, QueryOptions } from './types'
 import { normalizeResource } from './resource-utils'
 
 interface App extends AppNode {
@@ -86,13 +86,21 @@ export class CachedApiClient implements ApiClient {
     }
   }
 
-  async query<TResult>(query: Query<TResult>, lookup = true): Promise<TResult> {
-    let result = lookup ? this.lookup(query) : undefined
+  async query<TResult>(query: Query<TResult>, options: QueryOptions = {}): Promise<TResult> {
+    const {
+      allowProgress = false,
+      lookupCache = true
+    } = options
+
+    let result = lookupCache ? this.lookup(query) : undefined
     if (typeof result !== 'undefined') {
       return result
     }
 
-    const progress = query.progress ? this.app.progress : null
+    const progress = (allowProgress && query.progress)
+      ? this.app.progress
+      : null
+
     if (progress) {
       progress.start()
     }

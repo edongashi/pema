@@ -50,7 +50,7 @@ export function useQuery<TResult>
   }, [app, resourceId])
 
   // Polling
-  const { pollInterval, pollCache } = query
+  const { pollInterval, pollCache = false } = query
   useEffect(() => {
     if (typeof pollInterval !== 'number' || pollInterval <= 0) {
       return
@@ -58,7 +58,11 @@ export function useQuery<TResult>
 
     const intervalId = setInterval(async () => {
       try {
-        const data = await app.apiClient.query(query, pollCache)
+        const data = await app.apiClient.query(query, {
+          allowProgress: false,
+          lookupCache: pollCache
+        })
+
         if (data !== state.data || state.loading || state.error) {
           setState({
             data,
@@ -82,7 +86,11 @@ export function useQuery<TResult>
   useDeepCompareEffect(() => {
     async function fetch() {
       try {
-        const data = await app.apiClient.query(query)
+        const data = await app.apiClient.query(query, {
+          allowProgress: tick === 0,
+          lookupCache: true
+        })
+
         setState({
           data,
           loading: false,
