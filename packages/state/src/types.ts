@@ -1,5 +1,3 @@
-import { AppNode } from '@pema/app'
-
 export interface Query<TResult> {
   readonly resource?: string
   readonly cache?: boolean | number
