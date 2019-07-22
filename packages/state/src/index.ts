@@ -1,2 +1,3 @@
 export * from './types'
-export { ApiCache } from './api-cache'
+export { CachedApiClient } from './cached-api-client'
+export { normalizeResource, matchResource } from './resource-utils'

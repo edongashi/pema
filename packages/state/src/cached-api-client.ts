@@ -1,6 +1,7 @@
 import { AppNode } from '@pema/app'
 import { Dictionary } from '@pema/utils'
-import { Query, Action } from './types'
+import { Action, ApiClient, Query } from './types'
+import { normalizeResource } from './resource-utils'
 
 interface App extends AppNode {
   progress?: {
@@ -14,20 +15,11 @@ interface CacheItem {
   value: any
 }
 
-function normalize(path: string) {
-  const parts = path.split('/', 2)
-  if (parts.length < 2) {
-    parts.push('*')
-  }
-
-  return parts
-}
-
 function asKey(id: string) {
   return id === '*' ? '__ROOT__' : id
 }
 
-export class ApiCache {
+export class CachedApiClient implements ApiClient {
   private readonly app: App
   private cache: Dictionary<Map<string, CacheItem>>
 
@@ -52,7 +44,7 @@ export class ApiCache {
       resources = [resources]
     }
 
-    const paths = resources.map(normalize)
+    const paths = resources.map(normalizeResource)
     for (const [type, id] of paths) {
       const map = this.cache[type]
       if (map) {
@@ -74,7 +66,7 @@ export class ApiCache {
       return undefined
     }
 
-    const [type, id] = normalize(query.resource)
+    const [type, id] = normalizeResource(query.resource)
     const map = this.cache[type]
     if (!map) {
       return undefined
@@ -112,7 +104,7 @@ export class ApiCache {
       }
 
       if (query.cache && query.resource) {
-        const [type, id] = normalize(query.resource)
+        const [type, id] = normalizeResource(query.resource)
         let map = this.cache[type]
         if (!map) {
           map = new Map<string, CacheItem>()
@@ -136,16 +128,21 @@ export class ApiCache {
     }
   }
 
-  async action<TResult>(action: Action<TResult>): Promise<TResult> {
-    const progress = action.progress ? this.app.progress : null
+  async action<TParams, TResult>
+    (action: Action<TParams, TResult>, params: TParams): Promise<TResult> {
+    const { app } = this
+    const progress = action.progress ? app.progress : null
     if (progress) {
       progress.start()
     }
 
     try {
-      const result = await action.perform(this.app)
+      const result = await action.perform(params, app)
       if (action.invalidates) {
-        this.invalidate(action.invalidates)
+        const resources = typeof action.invalidates === 'function'
+          ? action.invalidates(params, app)
+          : action.invalidates
+        this.invalidate(resources)
       }
 
       return result
