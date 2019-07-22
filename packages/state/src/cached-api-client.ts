@@ -140,7 +140,10 @@ export class CachedApiClient implements ApiClient {
     } catch (error) {
       if (allowErrorCallback && query.onError) {
         query.onError({
-          apiClient: this
+          error,
+          app: this.app,
+          apiClient: this,
+          query
         })
       }
 

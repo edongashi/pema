@@ -41,6 +41,7 @@ export function useQuery<TResult>
       }
     }
 
+    // Optimistic updates
     function mapHandler(pattern: string, map: (value: TResult) => TResult) {
       if (matchResource(pattern, resourceId)) {
         setState(current => (current.loading || current.error)
