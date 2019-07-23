@@ -1,9 +1,9 @@
 import { AppNode } from '@pema/app'
-import { ApiClient, Action, Query, matchResource } from '@pema/state'
+import { ApiClient, Action, Query, matchResource, Schema } from '@pema/state'
 import { useApp } from '@pema/app-react'
 import { useEffect, useState, useRef } from 'react'
 import useDeepCompareEffect from 'use-deep-compare-effect'
-import { QueryState, QueryResult, UseQueryOptions } from './types'
+import { ActionInvoker, QueryState, QueryResult, UseQueryOptions } from './types'
 
 interface App extends AppNode {
   apiClient: ApiClient
@@ -125,10 +125,14 @@ export function useQuery<TResult>
   }
 }
 
-type ActionInvoker<TParams, TResult> =
-  TParams extends void
-  ? () => Promise<TResult>
-  : (params: TParams) => Promise<TResult>
+const dummySchema = {
+  async validate(value: any) {
+    return value
+  },
+  validateSync(value: any) {
+    return value
+  }
+}
 
 export function useAction
   <TParams, TResult>(action: Action<TParams, TResult>):
@@ -138,5 +142,6 @@ export function useAction
     return app.apiClient.action(action, params)
   }
 
-  return invoke as ActionInvoker<TParams, TResult>
+  invoke.schema = action.schema || dummySchema
+  return (invoke as any) as ActionInvoker<TParams, TResult>
 }
