@@ -1,7 +1,7 @@
 import { AppNode } from '@pema/app'
-import { ApiClient, Action, Query, matchResource, Schema } from '@pema/state'
+import { ApiClient, Action, Query, matchResource } from '@pema/state'
 import { useApp } from '@pema/app-react'
-import { useEffect, useState, useRef, isValidElement } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import useDeepCompareEffect from 'use-deep-compare-effect'
 import { ActionInvoker, QueryState, QueryResult, UseQueryOptions } from './types'
 
