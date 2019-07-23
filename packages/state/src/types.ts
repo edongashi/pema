@@ -10,8 +10,6 @@ export interface Query<TResult> {
   readonly cache?: boolean | number
   readonly progress?: boolean
   readonly params?: {}
-  readonly pollInterval?: number
-  readonly pollCache?: boolean
   readonly onError?: (context: QueryErrorContext<TResult>) => void
   fetch(app: any): Promise<TResult>
 }

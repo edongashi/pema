@@ -5,6 +5,11 @@ test('matchResource', () => {
   expect(matchResource('*', 'user/1')).toBe(true)
   expect(matchResource('*', 'user/1/friends')).toBe(true)
 
+  expect(matchResource('*', '*')).toBe(true)
+  expect(matchResource('user', '*')).toBe(false)
+  expect(matchResource('user/1', '*')).toBe(false)
+  expect(matchResource('user/1/friends', '*')).toBe(false)
+
   expect(matchResource('user', 'user')).toBe(true)
   expect(matchResource('user', 'user/1')).toBe(true)
   expect(matchResource('user', 'user/1/friends')).toBe(true)

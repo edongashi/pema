@@ -1,6 +1,7 @@
 export interface UseQueryOptions {
   active?: boolean
-  allowPolling?: boolean
+  pollInterval?: number
+  pollCache?: boolean
 }
 
 export interface QueryState<TResult> {
@@ -10,6 +11,6 @@ export interface QueryState<TResult> {
 }
 
 export interface QueryResult<TResult> extends QueryState<TResult> {
-  refetch(): void
+  refetch(lookupCache?: boolean): void
   ready: boolean
 }

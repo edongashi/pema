@@ -1,7 +1,7 @@
 import { AppNode } from '@pema/app'
 import { ApiClient, Action, Query, matchResource } from '@pema/state'
 import { useApp } from '@pema/app-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import useDeepCompareEffect from 'use-deep-compare-effect'
 import { QueryState, QueryResult, UseQueryOptions } from './types'
 
@@ -13,23 +13,30 @@ const noParams = {}
 
 export function useQuery<TResult>
   (query: Query<TResult>, options: UseQueryOptions = {}): QueryResult<TResult> {
+  // Context
   const {
     active = true,
-    allowPolling = true
+    pollInterval = 0,
+    pollCache = false
   } = options
   const app = useApp<App>()
-  const [tick, setTick] = useState(0)
 
-  const initialData = tick === 0 ? app.apiClient.lookup(query) : undefined
+  // Fetch cycle
+  // tslint:disable-next-line: variable-name
+  const [fetchCycle, __setFetchCycle] = useState(0)
+  const lookupCacheRef = useRef(true)
+  function refetch(lookupCache = false) {
+    lookupCacheRef.current = lookupCache
+    __setFetchCycle(c => c + 1)
+  }
+
+  // State
+  const initialData = fetchCycle === 0 ? app.apiClient.lookup(query) : undefined
   const [state, setState] = useState<QueryState<TResult>>({
     data: initialData as TResult,
     loading: typeof initialData === 'undefined',
     error: false
   })
-
-  function refetch() {
-    setTick(t => t + 1)
-  }
 
   // Invalidation
   const resourceId = query.resource || '*'
@@ -37,7 +44,7 @@ export function useQuery<TResult>
     // Refetching
     function refetchHandler(pattern: string) {
       if (matchResource(pattern, resourceId)) {
-        refetch()
+        refetch(true)
       }
     }
 
@@ -53,48 +60,33 @@ export function useQuery<TResult>
     app.events.on('apiClient.refetch', refetchHandler)
     app.events.on('apiClient.map', mapHandler)
 
-    function dispose() {
+    return () => {
       app.events.off('apiClient.refetch', refetchHandler)
       app.events.off('apiClient.map', refetchHandler)
     }
-
-    return dispose
   }, [app, resourceId])
 
   // Polling
-  const { pollInterval, pollCache = false } = query
+  const pollCacheRef = useRef(pollCache)
   useEffect(() => {
-    if (!active || !allowPolling || typeof pollInterval !== 'number' || pollInterval <= 0) {
+    pollCacheRef.current = pollCache
+  }, [pollCache])
+
+  useEffect(() => {
+    if (!active || typeof pollInterval !== 'number' || pollInterval <= 0) {
       return
     }
 
-    const intervalId = setInterval(async () => {
-      try {
-        const data = await app.apiClient.query(query, {
-          allowProgress: false,
-          lookupCache: pollCache
-        })
-
-        if (data !== state.data || state.loading || state.error) {
-          setState({
-            data,
-            loading: false,
-            error: false
-          })
-        }
-      } catch {
-        setState({
-          data: (undefined as any) as TResult,
-          loading: false,
-          error: true
-        })
-      }
-    }, pollInterval)
-
-    return () => clearInterval(intervalId)
-  }, [active, allowPolling, tick, pollInterval, pollCache])
+    const timeoutId = setTimeout(() => refetch(pollCacheRef.current), pollInterval)
+    return () => clearTimeout(timeoutId)
+  }, [active, fetchCycle, pollInterval])
 
   // Fetching
+  const queryRef = useRef(query)
+  useEffect(() => {
+    queryRef.current = query
+  }, [query])
+
   useDeepCompareEffect(() => {
     if (!active) {
       return
@@ -102,9 +94,9 @@ export function useQuery<TResult>
 
     async function fetch() {
       try {
-        const data = await app.apiClient.query(query, {
-          allowProgress: tick === 0,
-          lookupCache: true
+        const data = await app.apiClient.query(queryRef.current, {
+          allowProgress: fetchCycle === 0,
+          lookupCache: lookupCacheRef.current
         })
 
         setState({
@@ -122,7 +114,7 @@ export function useQuery<TResult>
     }
 
     fetch()
-  }, [active, tick, query.params || noParams])
+  }, [active, fetchCycle, query.params || noParams])
 
   return {
     data: state.data,

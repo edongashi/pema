@@ -3,6 +3,10 @@ export function matchResource(pattern: string, resource: string): boolean {
     return true
   }
 
+  if (resource === '*') {
+    return false
+  }
+
   const patternParts = pattern.split('/')
   const resourceParts = resource.split('/')
   for (let i = 0; i < patternParts.length; i++) {
