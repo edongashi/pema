@@ -142,7 +142,9 @@ export function useAction
     return app.apiClient.action(action, params)
   }
 
-  invoke.schema = action.schema || dummySchema
-  invoke.validate = (value: TParams) => invoke.schema.validate(value)
+  const schema = action.schema || dummySchema
+  invoke.schema = schema
+  invoke.validate = (value: TParams) => schema.validate(value)
+  invoke.validateSync = (value: TParams) => schema.validateSync(value)
   return (invoke as any) as ActionInvoker<TParams, TResult>
 }

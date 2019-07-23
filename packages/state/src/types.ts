@@ -70,6 +70,7 @@ type MaybeComputed<T, TContext> = T | ((context: TContext) => T)
 
 export interface Schema<TParams> {
   validate(params: TParams): Promise<TParams>
+  validateSync(params: TParams): TParams
 }
 
 export interface Action<TParams = void, TResult = void> {
