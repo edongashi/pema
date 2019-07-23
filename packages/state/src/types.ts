@@ -68,12 +68,17 @@ export interface FailedActionUpdateMap<TParams, TResult> {
 
 type MaybeComputed<T, TContext> = T | ((context: TContext) => T)
 
+export interface Schema<TParams> {
+  validate(params: TParams): Promise<TParams>
+}
+
 export interface Action<TParams = void, TResult = void> {
   readonly progress?: MaybeComputed<boolean, ActionContext<TParams, TResult>>
   readonly optimistic?: MaybeComputed<OptimisticUpdateMap<TParams, TResult>, ActionContext<TParams, TResult>>
   readonly onSuccess?: MaybeComputed<PostActionUpdateMap<TParams, TResult>, PostActionContext<TParams, TResult>>
   readonly onError?: MaybeComputed<FailedActionUpdateMap<TParams, TResult>, FailedActionContext<TParams, TResult>>
   readonly invalidates?: MaybeComputed<string[], PostActionContext<TParams, TResult>>
+  schema?: Schema<TParams>
   perform(params: TParams, app: any): Promise<TResult>
 }
 

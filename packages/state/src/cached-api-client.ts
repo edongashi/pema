@@ -157,6 +157,10 @@ export class CachedApiClient implements ApiClient {
 
   async action<TParams, TResult>
     (action: Action<TParams, TResult>, params: TParams): Promise<TResult> {
+    if (action.schema) {
+      params = await action.schema.validate(params) || params
+    }
+
     const apiClient = this
     const { app } = this
     const progress = action.progress ? app.progress : null
