@@ -1,7 +1,7 @@
 import { AppNode } from '@pema/app'
 import { ApiClient, Action, Query, matchResource, Schema } from '@pema/state'
 import { useApp } from '@pema/app-react'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, isValidElement } from 'react'
 import useDeepCompareEffect from 'use-deep-compare-effect'
 import { ActionInvoker, QueryState, QueryResult, UseQueryOptions } from './types'
 
@@ -131,6 +131,12 @@ const dummySchema = {
   },
   validateSync(value: any) {
     return value
+  },
+  async isValid() {
+    return true
+  },
+  isValidSync() {
+    return true
   }
 }
 
@@ -144,7 +150,5 @@ export function useAction
 
   const schema = action.schema || dummySchema
   invoke.schema = schema
-  invoke.validate = (value: TParams) => schema.validate(value)
-  invoke.validateSync = (value: TParams) => schema.validateSync(value)
   return (invoke as any) as ActionInvoker<TParams, TResult>
 }
