@@ -24,6 +24,7 @@ type ActionFunc<TParams, TResult> =
 
 interface WithSchema<TParams> {
   schema: Schema<TParams>
+  validate(value: TParams): Promise<TParams>
 }
 
 export type ActionInvoker<TParams, TResult> =

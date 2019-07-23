@@ -143,5 +143,6 @@ export function useAction
   }
 
   invoke.schema = action.schema || dummySchema
+  invoke.validate = (value: TParams) => invoke.schema.validate(value)
   return (invoke as any) as ActionInvoker<TParams, TResult>
 }
