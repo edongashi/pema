@@ -6,11 +6,11 @@ export interface QueryErrorContext<TResult = any> {
 }
 
 export interface Query<TResult> {
-  resource?: string
-  cache?: boolean | number
-  progress?: boolean
-  params?: {}
-  onError?: (context: QueryErrorContext<TResult>) => void
+  readonly resource?: string
+  readonly cache?: boolean | number
+  readonly progress?: boolean
+  readonly params?: {}
+  readonly onError?: (context: QueryErrorContext<TResult>) => void
   fetch(app: any): Promise<TResult>
 }
 
@@ -73,12 +73,12 @@ export interface Schema<TParams> {
 }
 
 export interface Action<TParams = void, TResult = void> {
-  progress?: MaybeComputed<boolean, ActionContext<TParams, TResult>>
-  optimistic?: MaybeComputed<OptimisticUpdateMap<TParams, TResult>, ActionContext<TParams, TResult>>
-  onSuccess?: MaybeComputed<PostActionUpdateMap<TParams, TResult>, PostActionContext<TParams, TResult>>
-  onError?: MaybeComputed<FailedActionUpdateMap<TParams, TResult>, FailedActionContext<TParams, TResult>>
-  invalidates?: MaybeComputed<string[], PostActionContext<TParams, TResult>>
-  schema?: Schema<TParams>
+  readonly progress?: MaybeComputed<boolean, ActionContext<TParams, TResult>>
+  readonly optimistic?: MaybeComputed<OptimisticUpdateMap<TParams, TResult>, ActionContext<TParams, TResult>>
+  readonly onSuccess?: MaybeComputed<PostActionUpdateMap<TParams, TResult>, PostActionContext<TParams, TResult>>
+  readonly onError?: MaybeComputed<FailedActionUpdateMap<TParams, TResult>, FailedActionContext<TParams, TResult>>
+  readonly invalidates?: MaybeComputed<string[], PostActionContext<TParams, TResult>>
+  readonly schema?: Schema<TParams>
   perform(params: TParams, app: any): Promise<TResult>
 }
 
