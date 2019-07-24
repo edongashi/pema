@@ -105,11 +105,11 @@ export function useQuery<TResult>
           error: false
         })
       } catch {
-        setState({
-          data: (undefined as any) as TResult,
+        setState(current => ({
+          data: current.data,
           loading: false,
           error: true
-        })
+        }))
       }
     }
 
