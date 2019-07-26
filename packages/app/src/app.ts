@@ -175,6 +175,7 @@ class AppNodeImpl implements AppNode {
   }
 
   dispose() {
+    this.events.emit('dispose')
     this.root.dispatch('dispose')
     allOff(this.events)
     this.__root.__disposed = true
