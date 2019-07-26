@@ -1,6 +1,6 @@
-export interface QueryErrorContext<TResult = any> {
+export interface QueryErrorContext<TResult = any, TApp> {
   error: any
-  app: any
+  app: TApp
   apiClient: ApiClient
   query: Query<TResult>
 }
@@ -10,25 +10,25 @@ export interface Query<TResult, TApp = any> {
   readonly cache?: boolean | number
   readonly progress?: boolean
   readonly params?: {}
-  readonly onError?: (context: QueryErrorContext<TResult>) => void
+  readonly onError?: (context: QueryErrorContext<TResult, TApp>) => void
   fetch(app: TApp): Promise<TResult>
 }
 
-interface ActionContext<TParams, TResult> {
+interface ActionContext<TParams, TResult, TApp> {
   params: TParams
   app: any
   apiClient: ApiClient
   action: Action<TParams, TResult>
 }
 
-export interface PostActionContext<TParams, TResult>
-  extends ActionContext<TParams, TResult> {
+export interface PostActionContext<TParams, TResult, TApp>
+  extends ActionContext<TParams, TResult, TApp> {
   result: TResult
 }
 
-export interface FailedActionContext<TParams, TResult>
-  extends ActionContext<TParams, TResult> {
-  error: any
+export interface FailedActionContext<TParams, TResult, TApp>
+  extends ActionContext<TParams, TResult, TApp> {
+  error: TApp
 }
 
 interface UpdateContext {
@@ -36,34 +36,34 @@ interface UpdateContext {
   value: any
 }
 
-export interface ActionUpdateContext<TParams, TResult>
-  extends ActionContext<TParams, TResult>, UpdateContext { }
+export interface ActionUpdateContext<TParams, TResult, TApp>
+  extends ActionContext<TParams, TResult, TApp>, UpdateContext { }
 
-export interface PostActionUpdateContext<TParams, TResult>
-  extends PostActionContext<TParams, TResult>, UpdateContext { }
+export interface PostActionUpdateContext<TParams, TResult, TApp>
+  extends PostActionContext<TParams, TResult, TApp>, UpdateContext { }
 
-export interface FailedActionUpdateContext<TParams, TResult>
-  extends FailedActionContext<TParams, TResult>, UpdateContext { }
+export interface FailedActionUpdateContext<TParams, TResult, TApp>
+  extends FailedActionContext<TParams, TResult, TApp>, UpdateContext { }
 
-export type OptimisticActionUpdate<TParams, TResult> =
-  (context: ActionUpdateContext<TParams, TResult>) => any
+export type OptimisticActionUpdate<TParams, TResult, TApp> =
+  (context: ActionUpdateContext<TParams, TResult, TApp>) => any
 
-export type PostActionUpdate<TParams, TResult> =
-  (context: PostActionUpdateContext<TParams, TResult>) => any
+export type PostActionUpdate<TParams, TResult, TApp> =
+  (context: PostActionUpdateContext<TParams, TResult, TApp>) => any
 
-export type FailedActionUpdate<TParams, TResult> =
-  (context: FailedActionUpdateContext<TParams, TResult>) => any
+export type FailedActionUpdate<TParams, TResult, TApp> =
+  (context: FailedActionUpdateContext<TParams, TResult, TApp>) => any
 
-export interface OptimisticUpdateMap<TParams, TResult> {
-  [resource: string]: OptimisticActionUpdate<TParams, TResult>
+export interface OptimisticUpdateMap<TParams, TResult, TApp> {
+  [resource: string]: OptimisticActionUpdate<TParams, TResult, TApp>
 }
 
-export interface PostActionUpdateMap<TParams, TResult> {
-  [resource: string]: PostActionUpdate<TParams, TResult>
+export interface PostActionUpdateMap<TParams, TResult, TApp> {
+  [resource: string]: PostActionUpdate<TParams, TResult, TApp>
 }
 
-export interface FailedActionUpdateMap<TParams, TResult> {
-  [resource: string]: FailedActionUpdate<TParams, TResult>
+export interface FailedActionUpdateMap<TParams, TResult, TApp> {
+  [resource: string]: FailedActionUpdate<TParams, TResult, TApp>
 }
 
 type MaybeComputed<T, TContext> = T | ((context: TContext) => T)
@@ -76,11 +76,26 @@ export interface Schema<TParams> {
 }
 
 export interface Action<TParams = void, TResult = void, TApp = any> {
-  readonly progress?: MaybeComputed<boolean, ActionContext<TParams, TResult>>
-  readonly optimistic?: MaybeComputed<OptimisticUpdateMap<TParams, TResult>, ActionContext<TParams, TResult>>
-  readonly onSuccess?: MaybeComputed<PostActionUpdateMap<TParams, TResult>, PostActionContext<TParams, TResult>>
-  readonly onError?: MaybeComputed<FailedActionUpdateMap<TParams, TResult>, FailedActionContext<TParams, TResult>>
-  readonly invalidates?: MaybeComputed<string[], PostActionContext<TParams, TResult>>
+  readonly progress?: MaybeComputed<
+    boolean,
+    ActionContext<TParams, TResult, TApp>
+  >
+  readonly optimistic?: MaybeComputed<
+    OptimisticUpdateMap<TParams, TResult, TApp>,
+    ActionContext<TParams, TResult, TApp>
+  >
+  readonly onSuccess?: MaybeComputed<
+    PostActionUpdateMap<TParams, TResult, TApp>,
+    PostActionContext<TParams, TResult, TApp>
+  >
+  readonly onError?: MaybeComputed<
+    FailedActionUpdateMap<TParams, TResult, TApp>,
+    FailedActionContext<TParams, TResult, TApp>
+  >
+  readonly invalidates?: MaybeComputed<
+    string[],
+    PostActionContext<TParams, TResult, TApp>
+  >
   readonly schema?: Schema<TParams>
   perform(params: TParams, TApp: any): Promise<TResult>
 }
