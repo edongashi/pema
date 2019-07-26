@@ -16,7 +16,7 @@ export interface Query<TResult, TApp = any> {
 
 interface ActionContext<TParams, TResult, TApp> {
   params: TParams
-  app: any
+  app: TApp
   apiClient: ApiClient
   action: Action<TParams, TResult>
 }
