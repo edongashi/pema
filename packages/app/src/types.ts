@@ -53,6 +53,7 @@ export interface AppNode {
   readonly env: AppEnv
   readonly volatile: Dictionary
   readonly events: Emitter
+  readonly disposed: boolean
   extend<T extends this>(plugin: (app: this) => T): T
   extend<T extends AppNode = this, TExtended extends T = T>(plugin: AppPlugin<T, TExtended>): this & TExtended
   extend<T extends ServiceDependencies>(services: T): Extended<this, T>

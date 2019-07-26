@@ -18,6 +18,7 @@ import eventEmitter from 'event-emitter'
 import allOff from 'event-emitter/all-off'
 
 class AppNodeImpl implements AppNode {
+  private __disposed: boolean
   private readonly __root: AppNodeImpl
   private readonly __state: JObject
   private readonly __env?: AppEnv
@@ -28,6 +29,7 @@ class AppNodeImpl implements AppNode {
     state: JObject = {},
     root: AppNodeImpl | null = null) {
     this.__state = state
+    this.__disposed = false
     if (root) {
       this.__root = root
     } else {
@@ -41,6 +43,10 @@ class AppNodeImpl implements AppNode {
       this.__volatile = {}
       this.__events = eventEmitter()
     }
+  }
+
+  get disposed(): boolean {
+    return this.__root.__disposed
   }
 
   get root(): AppNodeImpl {
@@ -171,6 +177,7 @@ class AppNodeImpl implements AppNode {
   dispose() {
     this.root.dispatch('dispose')
     allOff(this.events)
+    this.__root.__disposed = true
   }
 
   toJSON(): JObject {
