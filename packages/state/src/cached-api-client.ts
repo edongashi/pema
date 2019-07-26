@@ -27,7 +27,7 @@ export class CachedApiClient implements ApiClient {
     this.cache = new Map()
   }
 
-  invalidate(resources: string[] | string) {
+  invalidate(resources: string[] | string, refetch = true) {
     if (!resources) {
       return
     }
@@ -61,8 +61,10 @@ export class CachedApiClient implements ApiClient {
       }
     }
 
-    for (const pattern of resources) {
-      app.emit('apiClient.refetch', pattern)
+    if (refetch) {
+      for (const pattern of resources) {
+        app.emit('apiClient.refetch', pattern)
+      }
     }
   }
 
