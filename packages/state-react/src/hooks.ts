@@ -41,8 +41,14 @@ export function useQuery<TResult>
   // Invalidation
   const resourceId = query.resource || '*'
   useEffect(() => {
+    let cancel = false
+
     // Refetching
     function refetchHandler(pattern: string) {
+      if (cancel) {
+        return
+      }
+
       if (matchResource(pattern, resourceId)) {
         refetch(true)
       }
@@ -50,6 +56,10 @@ export function useQuery<TResult>
 
     // Optimistic updates
     function mapHandler(pattern: string, map: (value: TResult) => TResult) {
+      if (cancel) {
+        return
+      }
+
       if (matchResource(pattern, resourceId)) {
         setState(current => (current.loading || current.error)
           ? current
@@ -61,6 +71,7 @@ export function useQuery<TResult>
     app.events.on('apiClient.map', mapHandler)
 
     return () => {
+      cancel = true
       app.events.off('apiClient.refetch', refetchHandler)
       app.events.off('apiClient.map', refetchHandler)
     }
@@ -92,6 +103,7 @@ export function useQuery<TResult>
       return
     }
 
+    let cancel = false
     async function fetch() {
       try {
         const data = await app.apiClient.query(queryRef.current, {
@@ -99,12 +111,20 @@ export function useQuery<TResult>
           lookupCache: lookupCacheRef.current
         })
 
+        if (cancel) {
+          return
+        }
+
         setState({
           data,
           loading: false,
           error: false
         })
       } catch {
+        if (cancel) {
+          return
+        }
+
         setState(current => ({
           data: current.data,
           loading: false,
@@ -114,6 +134,9 @@ export function useQuery<TResult>
     }
 
     fetch()
+    return () => {
+      cancel = true
+    }
   }, [active, fetchCycle, query.params || noParams])
 
   return {
