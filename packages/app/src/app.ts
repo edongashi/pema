@@ -209,7 +209,6 @@ class AppNodeImpl implements AppNode {
   }
 }
 
-export function app(): AppNode
 export function app(state?: JObject): AppNode {
   return new AppNodeImpl(state)
 }
