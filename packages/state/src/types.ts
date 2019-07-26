@@ -1,4 +1,4 @@
-export interface QueryErrorContext<TResult = any, TApp> {
+export interface QueryErrorContext<TResult = any, TApp = any> {
   error: any
   app: TApp
   apiClient: ApiClient
