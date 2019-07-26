@@ -107,7 +107,7 @@ export function useQuery<TResult>
     async function fetch() {
       try {
         const data = await app.apiClient.query(queryRef.current, {
-          allowProgress: fetchCycle === 0,
+          allowProgress: true,
           lookupCache: lookupCacheRef.current
         })
 
