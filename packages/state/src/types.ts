@@ -5,13 +5,13 @@ export interface QueryErrorContext<TResult = any> {
   query: Query<TResult>
 }
 
-export interface Query<TResult> {
+export interface Query<TResult, TApp = any> {
   readonly resource?: string
   readonly cache?: boolean | number
   readonly progress?: boolean
   readonly params?: {}
   readonly onError?: (context: QueryErrorContext<TResult>) => void
-  fetch(app: any): Promise<TResult>
+  fetch(app: TApp): Promise<TResult>
 }
 
 interface ActionContext<TParams, TResult> {
@@ -75,14 +75,14 @@ export interface Schema<TParams> {
   isValidSync(params: TParams): boolean
 }
 
-export interface Action<TParams = void, TResult = void> {
+export interface Action<TParams = void, TResult = void, TApp = any> {
   readonly progress?: MaybeComputed<boolean, ActionContext<TParams, TResult>>
   readonly optimistic?: MaybeComputed<OptimisticUpdateMap<TParams, TResult>, ActionContext<TParams, TResult>>
   readonly onSuccess?: MaybeComputed<PostActionUpdateMap<TParams, TResult>, PostActionContext<TParams, TResult>>
   readonly onError?: MaybeComputed<FailedActionUpdateMap<TParams, TResult>, FailedActionContext<TParams, TResult>>
   readonly invalidates?: MaybeComputed<string[], PostActionContext<TParams, TResult>>
   readonly schema?: Schema<TParams>
-  perform(params: TParams, app: any): Promise<TResult>
+  perform(params: TParams, TApp: any): Promise<TResult>
 }
 
 export interface QueryOptions {
@@ -92,7 +92,7 @@ export interface QueryOptions {
 }
 
 export interface ApiClient {
-  invalidate(resources: string[] | string): void
+  invalidate(resources: string[] | string, refetch?: boolean): void
   refetch(resources: string[] | string): void
   lookup<TResult>(query: Query<TResult>): TResult | undefined
   query<TResult>(query: Query<TResult>, options?: QueryOptions): Promise<TResult>
