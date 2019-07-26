@@ -97,7 +97,7 @@ export interface Action<TParams = void, TResult = void, TApp = any> {
     PostActionContext<TParams, TResult, TApp>
   >
   readonly schema?: Schema<TParams>
-  perform(params: TParams, TApp: any): Promise<TResult>
+  perform(params: TParams, TApp: TApp): Promise<TResult>
 }
 
 export interface QueryOptions {
