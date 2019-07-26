@@ -1,3 +1,7 @@
+// tslint:disable: variable-name
+// tslint:disable: forin
+// tslint:disable: ban-types
+
 import { JObject, Dictionary } from '@pema/utils'
 import {
   AppNode,
@@ -7,7 +11,8 @@ import {
   ServiceEnv,
   Emitter,
   AppEnv,
-  AppPlugin
+  AppPlugin,
+  AppMixin
 } from './types'
 import eventEmitter from 'event-emitter'
 import allOff from 'event-emitter/all-off'
@@ -52,6 +57,23 @@ class AppNodeImpl implements AppNode {
 
   get events(): Emitter {
     return this.__root.__events as Emitter
+  }
+
+  mixin<T extends AppMixin<this>>(mixin: T): this & T {
+    for (const key in mixin) {
+      if (key in this) {
+        continue
+      }
+
+      Object.defineProperty(this, key, {
+        enumerable: false,
+        configurable: true,
+        writable: true,
+        value: mixin[key]
+      })
+    }
+
+    return this as this & T
   }
 
   extend<T extends this>(plugin: (app: this) => T): T
@@ -188,7 +210,6 @@ class AppNodeImpl implements AppNode {
 }
 
 export function app(): AppNode
-export function app(state: JObject): AppNode
 export function app(state?: JObject): AppNode {
   return new AppNodeImpl(state)
 }

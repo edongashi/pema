@@ -56,6 +56,7 @@ export interface AppNode {
   extend<T extends this>(plugin: (app: this) => T): T
   extend<T extends AppNode = this, TExtended extends T = T>(plugin: AppPlugin<T, TExtended>): this & TExtended
   extend<T extends ServiceDependencies>(services: T): Extended<this, T>
+  mixin<T extends AppMixin<this>>(mixin: T): this & T
   visit(visitor: ((service: any) => void)): void
   emit(type: string, ...args: any[]): void
   dispatch(method: string, ...args: any[]): void
@@ -87,5 +88,10 @@ export type Services<T extends AppExtension> =
   T extends AppPlugin ? ResolvePlugin<T> :
   {}
 
-export type AppOptions<TOptions, TApp extends AppNode =
-  AppNode> = Options<TOptions, TApp>
+export type AppOptions<TOptions, TApp extends AppNode = AppNode>
+  = Options<TOptions, TApp>
+
+// tslint:disable-next-line: interface-over-type-literal
+export type AppMixin<TApp extends AppNode> = {
+  [key: string]: (this: TApp, ...args: any[]) => any
+}
