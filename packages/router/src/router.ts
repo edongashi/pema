@@ -349,8 +349,8 @@ export default class RouterImpl implements Router {
             finalize(action)
             return
           case 'redirect':
-            this.locked = false
             this.app.emit('router.onRedirect')
+            this.locked = false
             if (action.push) {
               this.push(action.path)
             } else {
