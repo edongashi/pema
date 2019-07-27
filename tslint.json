@@ -20,6 +20,7 @@
     "arrow-parens": false,
     "no-console": false,
     "interface-name": false,
+    "interface-over-type-literal": false,
     "object-literal-sort-keys": false,
     "only-arrow-functions": false,
     "ordered-imports": false,

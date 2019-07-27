@@ -182,7 +182,7 @@ export interface Router {
 }
 
 export interface RoutingTable {
-  [key: string]: RouteConfig | DelayableAction<RouteAction> | DelayableAction<AnyAction>[]
+  [key: string]: RouteConfig | DelayableAction<RouteAction> | Array<DelayableAction<AnyAction>>
 }
 
 export interface RouteConfig {
@@ -195,7 +195,7 @@ export interface RouteConfig {
   order?: number
   stateless?: boolean
   routes?: RoutingTable
-  beforeEnter?: DelayableAction<TransitionAction> | DelayableAction<AnyAction>[]
+  beforeEnter?: DelayableAction<TransitionAction> | Array<DelayableAction<AnyAction>>
   onEnter?: SingleOrArray<DelayableAction<RouteAction>>
   isError?: boolean
   [key: string]: any
