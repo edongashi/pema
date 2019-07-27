@@ -471,6 +471,14 @@ export default class RouterImpl implements Router {
     this.history.replace(toHistoryLocation(path, this.history.location))
   }
 
+  navigate(path: Path): void {
+    if (typeof window !== 'undefined') {
+      window.location.href = this.createHref(path)
+    } else {
+      this.replace(path)
+    }
+  }
+
   reload(deep = false): Promise<void> {
     if (this.locked) {
       return Promise.resolve()

@@ -169,6 +169,7 @@ export interface Router {
   readonly view: RouterView
   push(path: Path): void
   replace(path: Path): void
+  navigate(path: Path): void
   reload(deep?: boolean): Promise<void>
   goBack(): void
   goForward(): void
