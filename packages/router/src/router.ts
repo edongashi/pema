@@ -474,7 +474,7 @@ export default class RouterImpl implements Router {
 
   navigate(path: Path): void {
     if (typeof window !== 'undefined') {
-      window.location.href = this.createHref(path)
+      window.location.replace(this.createHref(path))
     } else {
       this.replace(path)
     }
