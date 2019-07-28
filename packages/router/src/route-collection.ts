@@ -11,7 +11,7 @@ function sorter(a: KeyedRouteConfig, b: KeyedRouteConfig) {
   return (a.order || 0) - (b.order || 0)
 }
 
-function flattenRoutes(path: string, routes: RoutingTable) {
+function keyedRoutes(path: string, routes: RoutingTable) {
   const childRoutes: KeyedRouteConfig[] = []
   const paths = Object.keys(routes)
   const len = paths.length
@@ -38,15 +38,29 @@ function toKeyedRoute(path: string, r: any): KeyedRouteConfig {
   }
 
   if (config.routes) {
-    result.keyedRoutes = flattenRoutes(path, config.routes)
+    result.keyedRoutes = keyedRoutes(path, config.routes)
+  }
+
+  return result
+}
+
+function flatten(
+  routes: KeyedRouteConfig[],
+  result: KeyedRouteConfig[]): KeyedRouteConfig[] {
+  for (let i = 0, len = routes.length; i < len; i++) {
+    const current = routes[i]
+    result.push(current)
+    if (current.keyedRoutes) {
+      flatten(current.keyedRoutes, result)
+    }
   }
 
   return result
 }
 
 export default class RouteCollection {
-  private routes: KeyedRouteConfig[]
   private notFound: KeyedRouteConfig
+  public routes: KeyedRouteConfig[]
 
   constructor(routes?: RoutingTable) {
     this.routes = []
@@ -65,7 +79,7 @@ export default class RouteCollection {
 
   registerRoutes(routes: RoutingTable): void {
     const current = this.routes
-    const all = current.concat(flattenRoutes('/', routes))
+    const all = current.concat(flatten(keyedRoutes('/', routes), []))
     if (current.length > 0) {
       all.sort(sorter)
     }
