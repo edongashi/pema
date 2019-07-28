@@ -61,11 +61,21 @@ export function error(code: number, error?: ErrorLike): ErrorResult {
   }
 }
 
-export function redirect(path: Path): RedirectResult {
+export interface RedirectOptions {
+  reload?: boolean
+  push?: boolean
+}
+
+export function redirect(path: Path, {
+  reload = false,
+  push = false
+}: RedirectOptions = {}): RedirectResult {
   return {
     __result: true,
     type: 'redirect',
-    path
+    path,
+    push,
+    reload
   }
 }
 

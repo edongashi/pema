@@ -112,9 +112,9 @@ export default class RouterImpl implements Router {
         callback(false)
         this.locked = false
         if (result.push) {
-          this.push(result.path)
+          this.push(result.path, result.reload)
         } else {
-          this.replace(result.path)
+          this.replace(result.path, result.reload)
         }
 
         return true
@@ -352,9 +352,9 @@ export default class RouterImpl implements Router {
             this.app.emit('router.onRedirect')
             this.locked = false
             if (action.push) {
-              this.push(action.path)
+              this.push(action.path, action.reload)
             } else {
-              this.replace(action.path)
+              this.replace(action.path, action.reload)
             }
 
             return

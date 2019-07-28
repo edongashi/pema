@@ -44,7 +44,7 @@ export type ViewResult
   = IsResult & { type: 'view', view: View, status?: number }
 
 export type RedirectResult
-  = IsResult & { type: 'redirect', path: Path, push?: boolean }
+  = IsResult & { type: 'redirect', path: Path, push?: boolean, reload?: boolean }
 
 export type ErrorResult
   = IsResult & { type: 'error', code: number, error?: ErrorLike }
