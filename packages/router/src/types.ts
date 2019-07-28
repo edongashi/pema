@@ -181,11 +181,14 @@ export interface Router {
   dispose(): void
 }
 
-export interface RoutingTable {
-  [key: string]: RouteConfig | DelayableAction<RouteAction> | Array<DelayableAction<AnyAction>>
+export interface RoutingTable<TParams extends ActionParams = ActionParams> {
+  [key: string]:
+  | RouteConfig<TParams>
+  | DelayableAction<RouteAction, TParams>
+  | Array<DelayableAction<AnyAction, TParams>>
 }
 
-export interface RouteConfig {
+export interface RouteConfig<TParams extends ActionParams = ActionParams> {
   __result?: never
   length?: never
 
@@ -195,8 +198,8 @@ export interface RouteConfig {
   order?: number
   stateless?: boolean
   routes?: RoutingTable
-  beforeEnter?: DelayableAction<TransitionAction> | Array<DelayableAction<AnyAction>>
-  onEnter?: SingleOrArray<DelayableAction<RouteAction>>
+  beforeEnter?: DelayableAction<TransitionAction, TParams> | Array<DelayableAction<AnyAction, TParams>>
+  onEnter?: SingleOrArray<DelayableAction<RouteAction, TParams>>
   isError?: boolean
   [key: string]: any
 }
