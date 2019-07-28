@@ -456,28 +456,30 @@ export default class RouterImpl implements Router {
   view: RouterView
   current: RouterState
 
-  push(path: Path): void {
-    if (this.locked) {
+  push(path: Path, reload = false): void {
+    if (reload && typeof window !== 'undefined') {
+      window.location.href = this.createHref(path)
+      return
+    }
+
+    if (!reload && this.locked) {
       return
     }
 
     this.history.push(toHistoryLocation(path, this.history.location))
   }
 
-  replace(path: Path): void {
-    if (this.locked) {
+  replace(path: Path, reload = false): void {
+    if (reload && typeof window !== 'undefined') {
+      window.location.replace(this.createHref(path))
+      return
+    }
+
+    if (!reload && this.locked) {
       return
     }
 
     this.history.replace(toHistoryLocation(path, this.history.location))
-  }
-
-  navigate(path: Path): void {
-    if (typeof window !== 'undefined') {
-      window.location.replace(this.createHref(path))
-    } else {
-      this.replace(path)
-    }
   }
 
   reload(deep = false): Promise<void> {

@@ -167,9 +167,8 @@ export interface RouterState extends ActionParams {
 export interface Router {
   readonly current: RouterState
   readonly view: RouterView
-  push(path: Path): void
-  replace(path: Path): void
-  navigate(path: Path): void
+  push(path: Path, reload?: boolean): void
+  replace(path: Path, reload?: boolean): void
   reload(deep?: boolean): Promise<void>
   goBack(): void
   goForward(): void
