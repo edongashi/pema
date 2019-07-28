@@ -196,7 +196,7 @@ export interface RouteConfig<TParams extends ActionParams = ActionParams> {
   sensitive?: boolean
   order?: number
   stateless?: boolean
-  routes?: RoutingTable
+  routes?: RoutingTable<TParams>
   beforeEnter?: DelayableAction<TransitionAction, TParams> | Array<DelayableAction<AnyAction, TParams>>
   onEnter?: SingleOrArray<DelayableAction<RouteAction, TParams>>
   isError?: boolean
