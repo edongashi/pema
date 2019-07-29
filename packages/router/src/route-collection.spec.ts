@@ -7,15 +7,15 @@ test('nested routes', () => {
     '/b': {},
     '/c': {
       routes: {
-        '/c-1': {
+        '/x': {
           routes: {
-            '/c-1-1': {},
-            '/c-1-2': {},
-            '/c-1-3': {}
+            '/1': {},
+            '/2': {},
+            '/3': {}
           }
         },
-        '/c-2': {},
-        '/c-3': {}
+        '/y': {},
+        '/z': {}
       }
     }
   }
@@ -23,4 +23,6 @@ test('nested routes', () => {
   const collection = new RouteCollection(routes)
   const flattenedRoutes = collection.routes
   expect(flattenedRoutes.length).toBe(9)
+  expect(flattenedRoutes.map(r => r.path).sort())
+    .toEqual(['/a', '/b', '/c', '/c/x', '/c/x/1', '/c/x/2', '/c/x/3', '/c/y', '/c/z'].sort())
 })
