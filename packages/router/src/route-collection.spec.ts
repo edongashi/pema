@@ -1,5 +1,5 @@
 import RouteCollection from './route-collection'
-import { RoutingTable } from './types';
+import { RoutingTable } from './types'
 
 test('nested routes', () => {
   const routes: RoutingTable = {

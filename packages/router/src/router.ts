@@ -298,10 +298,14 @@ export default class RouterImpl implements Router {
     }
   }
 
+  // tslint:disable-next-line: variable-name
+  private __id: number = 0
   private async onEnter(historyLocation: HistoryLocation, historyAction: HistoryAction) {
     if (this.locked) {
       return
     }
+
+    const id = ++this.__id
 
     let cached = this.cachedParams
     this.cachedParams = null
@@ -320,10 +324,18 @@ export default class RouterImpl implements Router {
       return
     }
 
-    this.locked = true
+    if (route.atomic) {
+      this.locked = true
+    }
+
     this.app.emit('router.onEnter')
 
     const finalize = (view: RouterView | null) => {
+      if (id !== this.__id) {
+        this.app.emit('router.onInterrupt')
+        return
+      }
+
       this.setView(view || notFound)
       this.locked = false
       this.emitCurrent(previous)
@@ -349,6 +361,11 @@ export default class RouterImpl implements Router {
             finalize(action)
             return
           case 'redirect':
+            if (id !== this.__id) {
+              this.app.emit('router.onInterrupt')
+              return
+            }
+
             this.app.emit('router.onRedirect')
             this.locked = false
             if (action.push) {
@@ -386,8 +403,6 @@ export default class RouterImpl implements Router {
         }
       } catch (e) {
         finalize(error(500, e))
-        this.locked = false
-        this.emitCurrent(previous)
       }
     }
 
