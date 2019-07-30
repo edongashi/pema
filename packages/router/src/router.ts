@@ -37,12 +37,12 @@ import {
   isOnlyHashChange
 } from './url-utils'
 import RouteCollection from './route-collection'
-import { error, allow } from './actions'
+import { error } from './actions'
 import resolveActions from './resolve-actions'
 import { matchPath } from './match'
 
 interface ViewSetter {
-  (fallback: FallbackView): void
+  (fallback: FallbackView, id: number): void
   cancel(): void
 }
 
@@ -197,7 +197,7 @@ export default class RouterImpl implements Router {
   }
 
   private async enterView
-    (view: View, params: ActionParams): Promise<AnyAction> {
+    (id: number, view: View, params: ActionParams): Promise<AnyAction> {
     if (view && view.dependencies) {
       this.app.extend(view.dependencies as any)
     }
@@ -206,12 +206,15 @@ export default class RouterImpl implements Router {
       view,
       params,
       view.onEnter,
-      this.fallbackSetter,
+      (fallback: FallbackView) => this.fallbackSetter(fallback, id),
       this.fallbackComputed)
   }
 
-  private async enterController
-    (ctor: ControllerConstructor, params: ActionParams, state: RouterState): Promise<AnyAction> {
+  private async enterController(
+    id: number,
+    ctor: ControllerConstructor,
+    params: ActionParams,
+    state: RouterState): Promise<AnyAction> {
     const { app, controllersPath } = this
     const { route } = params
     const dict = app as Dictionary
@@ -236,7 +239,7 @@ export default class RouterImpl implements Router {
       controller,
       params,
       controller.onEnter,
-      this.fallbackSetter,
+      (fallback: FallbackView) => this.fallbackSetter(fallback, id),
       this.fallbackComputed) as ControllerAction
   }
 
@@ -260,6 +263,7 @@ export default class RouterImpl implements Router {
     this.locked = true
     const { params } = cached
     let called = false
+    const fallbackSetter = (fallback: FallbackView) => this.fallbackSetter(fallback, 0)
     try {
       const controller = this.currentController
       if (controller && controller.beforeLeave) {
@@ -267,7 +271,7 @@ export default class RouterImpl implements Router {
           controller,
           params,
           controller.beforeLeave,
-          this.fallbackSetter,
+          fallbackSetter,
           this.fallbackComputed)
         if (this.terminate(action, callback)) {
           return
@@ -280,7 +284,7 @@ export default class RouterImpl implements Router {
           route,
           params,
           route.beforeEnter,
-          this.fallbackSetter,
+          fallbackSetter,
           this.fallbackComputed)
         if (this.terminate(action, callback)) {
           return
@@ -306,6 +310,9 @@ export default class RouterImpl implements Router {
     }
 
     const id = ++this.__id
+    // tslint:disable-next-line: variable-name
+    const __fallbackSetter = this.fallbackSetter
+    const fallbackSetter = (fallback: FallbackView) => __fallbackSetter(fallback, id)
 
     let cached = this.cachedParams
     this.cachedParams = null
@@ -381,7 +388,7 @@ export default class RouterImpl implements Router {
               return
             }
 
-            let result = await this.enterController(action.controller, params, state)
+            let result = await this.enterController(id, action.controller, params, state)
             if (result.type === 'allow' && action.defaultAction) {
               result = action.defaultAction
             }
@@ -394,7 +401,7 @@ export default class RouterImpl implements Router {
               return
             }
 
-            await enter(await this.enterView(action.view, params), action)
+            await enter(await this.enterView(id, action.view, params), action)
             return
           case 'allow':
           default:
@@ -411,7 +418,7 @@ export default class RouterImpl implements Router {
         route,
         params,
         route.onEnter,
-        this.fallbackSetter,
+        (fallback: FallbackView) => this.fallbackSetter(fallback, id),
         this.fallbackComputed)
       : notFound
 
@@ -444,11 +451,13 @@ export default class RouterImpl implements Router {
       fallbackDelay = 500
     }
 
-    this.fallbackSetter = throttle((fallback: FallbackView) => {
-      this.__setView({
-        type: 'fallback',
-        fallback
-      })
+    this.fallbackSetter = throttle((fallback: FallbackView, id: number) => {
+      if (id === 0 || this.__id === id) {
+        this.__setView({
+          type: 'fallback',
+          fallback
+        })
+      }
     }, fallbackDelay, { leading: false, trailing: true })
 
     function getUserConfirmation(_: string, callback: (go: boolean) => void) {
