@@ -1,7 +1,7 @@
 {
   "name": "@pema/state-react",
   "private": false,
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.3",
   "description": "> TODO: description",
   "author": "Edon Gashi <edon.gashi@uni-pr.edu>",
   "homepage": "https://github.com/edongashi/pema#readme",
@@ -29,9 +29,9 @@
     "url": "https://github.com/edongashi/pema/issues"
   },
   "dependencies": {
-    "@pema/app": "^0.1.0-alpha.2",
-    "@pema/state": "^0.1.0-alpha.2",
-    "@pema/utils": "^0.1.0-alpha.2",
+    "@pema/app": "^0.1.0-alpha.3",
+    "@pema/state": "^0.1.0-alpha.3",
+    "@pema/utils": "^0.1.0-alpha.3",
     "use-deep-compare-effect": "^1.2.0"
   },
   "devDependencies": {
