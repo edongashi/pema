@@ -6,6 +6,7 @@ export interface QueryErrorContext<TResult = any, TApp = any> {
 }
 
 export interface Query<TResult, TApp = any> {
+  readonly factory?: any
   readonly resource?: string
   readonly cache?: boolean | number
   readonly progress?: boolean
