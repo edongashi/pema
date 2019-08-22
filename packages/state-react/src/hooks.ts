@@ -120,7 +120,7 @@ export function useQuery<TResult>
           loading: false,
           error: false
         })
-      } catch {
+      } catch (error) {
         if (cancel) {
           return
         }
@@ -128,7 +128,7 @@ export function useQuery<TResult>
         setState(current => ({
           data: current.data,
           loading: false,
-          error: true
+          error: error || true
         }))
       }
     }
