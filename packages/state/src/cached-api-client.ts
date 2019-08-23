@@ -19,12 +19,14 @@ export interface UpdateMap {
 }
 
 export class CachedApiClient implements ApiClient {
-  private readonly app: App
+  protected readonly app: App
+  private inflight: Map<string, Promise<any>>
   private cache: Map<string, CacheItem>
 
-  constructor(todo: any, app: App) {
+  constructor(state: any, app: App) {
     this.app = app
     this.cache = new Map()
+    this.inflight = new Map()
   }
 
   invalidate(resources: string[] | string, refetch = true) {
@@ -103,28 +105,14 @@ export class CachedApiClient implements ApiClient {
     }
   }
 
-  async query<TResult>(query: Query<TResult>, options: QueryOptions = {}): Promise<TResult> {
-    const {
-      allowProgress = false,
-      allowErrorCallback = true,
-      lookupCache = true
-    } = options
+  protected fetch<TResult>(query: Query<TResult>): Promise<TResult> {
+    return query.fetch(this.app)
+  }
 
-    let result = lookupCache ? this.lookup(query) : undefined
-    if (typeof result !== 'undefined') {
-      return result
-    }
-
-    const progress = (allowProgress && query.progress)
-      ? this.app.progress
-      : null
-
-    if (progress) {
-      progress.start()
-    }
-
+  private async fetchWrapper<TResult>(query: Query<TResult>, allowErrorCallback: boolean): Promise<TResult> {
+    let result: TResult
     try {
-      result = await query.fetch(this.app)
+      result = await this.fetch(query)
       if (typeof result === 'undefined') {
         result = (null as any) as TResult
       }
@@ -150,11 +138,67 @@ export class CachedApiClient implements ApiClient {
       }
 
       throw error
+    }
+  }
+
+  async query<TResult>(query: Query<TResult>, options: QueryOptions = {}): Promise<TResult> {
+    const {
+      allowProgress = true,
+      allowErrorCallback = true,
+      lookupCache = true,
+      dedupe = true
+    } = options
+
+    const cached = lookupCache ? this.lookup(query) : undefined
+    if (typeof cached !== 'undefined') {
+      return cached
+    }
+
+    const progress = (allowProgress && query.progress)
+      ? this.app.progress
+      : null
+
+    let promise: Promise<TResult>
+    const resource = query.cache && query.resource
+    const { inflight } = this
+    if (dedupe && typeof resource === 'string' && inflight.has(resource)) {
+      promise = inflight.get(resource) as Promise<TResult>
+    } else {
+      promise = this.fetchWrapper(query, allowErrorCallback)
+      if (typeof resource === 'string') {
+        const remove = () => {
+          if (inflight.get(resource) === promise) {
+            inflight.delete(resource)
+          }
+        }
+
+        promise = promise.then(res => {
+          remove()
+          return res
+        }, err => {
+          remove()
+          throw err
+        })
+
+        inflight.set(resource, promise)
+      }
+    }
+
+    if (progress) {
+      progress.start()
+    }
+
+    try {
+      return await promise
     } finally {
       if (progress) {
         progress.done()
       }
     }
+  }
+
+  protected perform<TParams, TResult>(action: Action<TParams, TResult>, params: TParams): Promise<TResult> {
+    return action.perform(params, this.app)
   }
 
   async action<TParams, TResult>
@@ -215,7 +259,7 @@ export class CachedApiClient implements ApiClient {
 
     try {
       runHook(action.optimistic, {})
-      const result = await action.perform(params, app)
+      const result = await this.perform(action, params)
       runHook(action.onSuccess, { result })
       if (action.invalidates) {
         const resources = typeof action.invalidates === 'function'

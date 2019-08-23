@@ -107,7 +107,6 @@ export function useQuery<TResult>
     async function fetch() {
       try {
         const data = await app.apiClient.query(queryRef.current, {
-          allowProgress: true,
           lookupCache: lookupCacheRef.current
         })
 
@@ -139,13 +138,38 @@ export function useQuery<TResult>
     }
   }, [active, fetchCycle, query.params || noParams])
 
-  return {
+  const result = {
     data: state.data,
     loading: state.loading,
     error: state.error,
     refetch,
-    ready: !state.loading && !state.error
+    ready: !state.loading && !state.error,
+    read(): TResult {
+      if (state.error) {
+        throw state.error
+      }
+
+      if (state.loading) {
+        if (typeof (query.cache && query.resource) !== 'string') {
+          throw new Error('Cannot suspend query.')
+        }
+
+        throw app.apiClient.query(query)
+      }
+
+      return state.data || app.apiClient.lookup(query) as TResult
+    },
+    preload() {
+      if (typeof (query.cache && query.resource) !== 'string') {
+        throw new Error('Cannot suspend query.')
+      }
+
+      app.apiClient.query(query)
+      return result
+    }
   }
+
+  return result
 }
 
 const dummySchema = {

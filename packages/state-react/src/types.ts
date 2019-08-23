@@ -14,6 +14,8 @@ export interface QueryState<TResult> {
 
 export interface QueryResult<TResult> extends QueryState<TResult> {
   refetch(lookupCache?: boolean): void
+  read(): TResult
+  preload(): this
   ready: boolean
 }
 

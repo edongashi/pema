@@ -6,11 +6,11 @@ export interface QueryErrorContext<TResult = any, TApp = any> {
 }
 
 export interface Query<TResult, TApp = any> {
+  readonly resource: string
+  readonly params?: {}
   readonly factory?: any
-  readonly resource?: string
   readonly cache?: boolean | number
   readonly progress?: boolean
-  readonly params?: {}
   readonly onError?: (context: QueryErrorContext<TResult, TApp>) => void
   fetch(app: TApp): Promise<TResult>
 }
@@ -105,6 +105,7 @@ export interface QueryOptions {
   allowProgress?: boolean
   allowErrorCallback?: boolean
   lookupCache?: boolean
+  dedupe?: boolean
 }
 
 export interface ApiClient {
