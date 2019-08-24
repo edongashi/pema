@@ -1,6 +1,7 @@
 import { AppNode } from '@pema/app'
+import { invariant } from '@pema/utils'
 import { matchResource } from './match-resource'
-import { Action, ApiClient, Query, QueryOptions } from './types'
+import { Action, ApiClient, Query, QueryOptions, MaybeComputed } from './types'
 
 interface App extends AppNode {
   progress?: {
@@ -16,6 +17,14 @@ interface CacheItem {
 
 export interface UpdateMap {
   [resource: string]: (context: any) => any
+}
+
+export function resolve<T, TParam>(value: MaybeComputed<T, TParam> | undefined, param: TParam): T | undefined {
+  if (typeof value === 'function') {
+    return (value as (param: TParam) => T)(param)
+  } else {
+    return value
+  }
 }
 
 export class CachedApiClient implements ApiClient {
@@ -34,9 +43,10 @@ export class CachedApiClient implements ApiClient {
       return
     }
 
-    const { app, cache } = this
+    const { app, cache, inflight } = this
     if (resources === '*') {
       this.cache = new Map()
+      this.inflight = new Map()
       app.emit('apiClient.refetch', '*')
       return
     }
@@ -45,9 +55,20 @@ export class CachedApiClient implements ApiClient {
       resources = [resources]
     }
 
-    const now = Date.now()
     const resourcesLength = resources.length
+
+    const inflightKeys = inflight.keys()
+    for (const key of inflightKeys) {
+      for (let i = 0; i < resourcesLength; i++) {
+        if (matchResource(resources[i], key)) {
+          inflight.delete(key)
+          break
+        }
+      }
+    }
+
     const entries = cache.entries()
+    const now = Date.now()
     // Todo: organize cache in tree for performance
     for (const [key, value] of entries) {
       if (value.expires && now >= value.expires) {
@@ -86,16 +107,12 @@ export class CachedApiClient implements ApiClient {
     }
   }
 
-  lookup<TResult>(query: Query<TResult>): TResult | undefined {
-    if (!query.cache || !query.resource) {
-      return undefined
-    }
-
+  lookup<TResult>(resource: string): TResult | undefined {
     const { cache } = this
-    const item = cache.get(query.resource)
+    const item = cache.get(resource)
     if (item) {
       if (item.expires && Date.now() >= item.expires) {
-        cache.delete(query.resource)
+        cache.delete(resource)
         return undefined
       }
 
@@ -105,35 +122,45 @@ export class CachedApiClient implements ApiClient {
     }
   }
 
-  protected fetch<TResult>(query: Query<TResult>): Promise<TResult> {
-    return query.fetch(this.app)
+  protected fetch<TResult, TParams>(query: Query<TResult, TParams>, params: TParams): Promise<TResult> {
+    return query.fetch(params, this.app)
   }
 
-  private async fetchWrapper<TResult>(query: Query<TResult>, allowErrorCallback: boolean): Promise<TResult> {
+  private async fetchWrapper<TResult, TParams>(
+    query: Query<TResult, TParams>,
+    resource: string,
+    params: TParams
+  ): Promise<TResult> {
     let result: TResult
     try {
-      result = await this.fetch(query)
+      result = await this.fetch(query, params)
       if (typeof result === 'undefined') {
-        result = (null as any) as TResult
+        result = null as any
       }
 
-      if (query.cache && query.resource) {
-        this.cache.set(query.resource, {
+      let cache = resolve(query.cache, params)
+      if (typeof cache === 'undefined') {
+        cache = true
+      }
+
+      if (cache) {
+        this.cache.set(resource, {
           value: result,
-          expires: query.cache === true
+          expires: cache === true
             ? false
-            : Date.now() + query.cache * 1000
+            : Date.now() + cache * 1000
         })
       }
 
       return result
     } catch (error) {
-      if (allowErrorCallback && query.onError) {
+      if (query.onError) {
         query.onError({
           error,
           app: this.app,
           apiClient: this,
-          query
+          query,
+          params
         })
       }
 
@@ -141,42 +168,46 @@ export class CachedApiClient implements ApiClient {
     }
   }
 
-  async query<TResult>(query: Query<TResult>, options: QueryOptions = {}): Promise<TResult> {
+  async query<TResult, TParams>(
+    query: Query<TResult, TParams>,
+    params: TParams,
+    options: QueryOptions = {}
+  ): Promise<TResult> {
     const {
       allowProgress = true,
-      allowErrorCallback = true,
       lookupCache = true,
       dedupe = true
     } = options
+    const resource = resolve(query.resource, params) as string
+    invariant(typeof resource === 'string', 'Queries must provide valid resource keys.')
 
-    const cached = lookupCache ? this.lookup(query) : undefined
+    const cached = lookupCache ? this.lookup<TResult>(resource) : undefined
     if (typeof cached !== 'undefined') {
       return cached
     }
 
-    const progress = (allowProgress && query.progress)
+    const progress = (allowProgress && resolve(query.progress, params))
       ? this.app.progress
       : null
 
     let promise: Promise<TResult>
-    const resource = query.cache && query.resource
     const { inflight } = this
-    if (dedupe && typeof resource === 'string' && inflight.has(resource)) {
+    if (dedupe && inflight.has(resource)) {
       promise = inflight.get(resource) as Promise<TResult>
     } else {
-      promise = this.fetchWrapper(query, allowErrorCallback)
-      if (typeof resource === 'string') {
-        const remove = () => {
+      promise = this.fetchWrapper(query, resource, params)
+      if (dedupe) {
+        promise = promise.then(res => {
           if (inflight.get(resource) === promise) {
             inflight.delete(resource)
           }
-        }
 
-        promise = promise.then(res => {
-          remove()
           return res
         }, err => {
-          remove()
+          if (inflight.get(resource) === promise) {
+            inflight.delete(resource)
+          }
+
           throw err
         })
 

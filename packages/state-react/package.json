@@ -31,8 +31,7 @@
   "dependencies": {
     "@pema/app": "^0.1.0-alpha.3",
     "@pema/state": "^0.1.0-alpha.3",
-    "@pema/utils": "^0.1.0-alpha.3",
-    "use-deep-compare-effect": "^1.2.0"
+    "@pema/utils": "^0.1.0-alpha.3"
   },
   "devDependencies": {
     "@types/react": "^16.8.23"

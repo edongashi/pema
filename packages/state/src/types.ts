@@ -1,18 +1,17 @@
-export interface QueryErrorContext<TResult = any, TApp = any> {
+export interface QueryErrorContext<TResult = any, TParams = void, TApp = any> {
   error: any
   app: TApp
   apiClient: ApiClient
-  query: Query<TResult>
+  query: Query<TResult, TParams>
+  params: TParams
 }
 
-export interface Query<TResult, TApp = any> {
-  readonly resource: string
-  readonly params?: {}
-  readonly factory?: any
-  readonly cache?: boolean | number
-  readonly progress?: boolean
-  readonly onError?: (context: QueryErrorContext<TResult, TApp>) => void
-  fetch(app: TApp): Promise<TResult>
+export interface Query<TResult, TParams = void, TApp = any> {
+  readonly resource: MaybeComputed<string, TParams>
+  readonly cache?: MaybeComputed<boolean | number, TParams>
+  readonly progress?: MaybeComputed<boolean, TParams>
+  readonly onError?: (context: QueryErrorContext<TResult, TParams, TApp>) => void
+  fetch(params: TParams, app: TApp): Promise<TResult>
 }
 
 interface ActionContext<TParams, TResult, TApp> {
@@ -67,7 +66,7 @@ export interface FailedActionUpdateMap<TParams, TResult, TApp> {
   [resource: string]: FailedActionUpdate<TParams, TResult, TApp>
 }
 
-type MaybeComputed<T, TContext> = T | ((context: TContext) => T)
+export type MaybeComputed<T, TContext> = T | ((context: TContext) => T)
 
 export interface Schema<TParams> {
   validate(params: TParams): Promise<TParams>
@@ -103,7 +102,6 @@ export interface Action<TParams = void, TResult = void, TApp = any> {
 
 export interface QueryOptions {
   allowProgress?: boolean
-  allowErrorCallback?: boolean
   lookupCache?: boolean
   dedupe?: boolean
 }
@@ -111,7 +109,7 @@ export interface QueryOptions {
 export interface ApiClient {
   invalidate(resources: string[] | string, refetch?: boolean): void
   refetch(resources: string[] | string): void
-  lookup<TResult>(query: Query<TResult>): TResult | undefined
-  query<TResult>(query: Query<TResult>, options?: QueryOptions): Promise<TResult>
+  lookup<TResult>(resource: string): TResult | undefined
+  query<TResult, TParams>(query: Query<TResult, TParams>, params: TParams, options?: QueryOptions): Promise<TResult>
   action<TParams, TResult>(action: Action<TParams, TResult>, params: TParams): Promise<TResult>
 }

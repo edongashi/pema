@@ -1,8 +1,8 @@
 import { AppNode } from '@pema/app'
-import { ApiClient, Action, Query, matchResource } from '@pema/state'
+import { ApiClient, Action, Query, matchResource, resolve } from '@pema/state'
 import { useApp } from '@pema/app-react'
+import { invariant } from '@pema/utils'
 import { useEffect, useState, useRef } from 'react'
-import useDeepCompareEffect from 'use-deep-compare-effect'
 import { ActionInvoker, QueryState, QueryResult, UseQueryOptions } from './types'
 
 interface App extends AppNode {
@@ -11,14 +11,28 @@ interface App extends AppNode {
 
 const noParams = {}
 
-export function useQuery<TResult>
-  (query: Query<TResult>, options: UseQueryOptions = {}): QueryResult<TResult> {
+export function useQuery<TResult>(
+  query: Query<TResult, void>
+): QueryResult<TResult>
+export function useQuery<TResult, TParams>(
+  query: Query<TResult, TParams>,
+  params: TParams,
+  options?: UseQueryOptions
+): QueryResult<TResult>
+export function useQuery<TResult, TParams>(
+  query: Query<TResult, TParams>,
+  params?: TParams,
+  options?: UseQueryOptions
+): QueryResult<TResult> {
+  const resource = resolve(query.resource, params as TParams) as string
+  invariant(typeof resource === 'string')
+
   // Context
   const {
     active = true,
     pollInterval = 0,
     pollCache = false
-  } = options
+  } = options || {}
   const app = useApp<App>()
 
   // Fetch cycle
@@ -31,7 +45,7 @@ export function useQuery<TResult>
   }
 
   // State
-  const initialData = fetchCycle === 0 ? app.apiClient.lookup(query) : undefined
+  const initialData = fetchCycle === 0 ? app.apiClient.lookup<TResult>(resource) : undefined
   const [state, setState] = useState<QueryState<TResult>>({
     data: initialData as TResult,
     loading: typeof initialData === 'undefined',
@@ -39,7 +53,6 @@ export function useQuery<TResult>
   })
 
   // Invalidation
-  const resourceId = query.resource || '*'
   useEffect(() => {
     let cancel = false
 
@@ -49,7 +62,7 @@ export function useQuery<TResult>
         return
       }
 
-      if (matchResource(pattern, resourceId)) {
+      if (matchResource(pattern, resource)) {
         refetch(true)
       }
     }
@@ -60,7 +73,7 @@ export function useQuery<TResult>
         return
       }
 
-      if (matchResource(pattern, resourceId)) {
+      if (matchResource(pattern, resource)) {
         setState(current => (current.loading || current.error)
           ? current
           : { data: map(current.data), loading: false, error: false })
@@ -75,13 +88,15 @@ export function useQuery<TResult>
       app.events.off('apiClient.refetch', refetchHandler)
       app.events.off('apiClient.map', refetchHandler)
     }
-  }, [app, resourceId])
+  }, [app, resource])
+
+  // Params ref
+  const paramsRef = useRef(params)
+  paramsRef.current = params
 
   // Polling
   const pollCacheRef = useRef(pollCache)
-  useEffect(() => {
-    pollCacheRef.current = pollCache
-  }, [pollCache])
+  pollCacheRef.current = pollCache
 
   useEffect(() => {
     if (!active || typeof pollInterval !== 'number' || pollInterval <= 0) {
@@ -93,12 +108,7 @@ export function useQuery<TResult>
   }, [active, fetchCycle, pollInterval])
 
   // Fetching
-  const queryRef = useRef(query)
   useEffect(() => {
-    queryRef.current = query
-  }, [query])
-
-  useDeepCompareEffect(() => {
     if (!active) {
       return
     }
@@ -106,7 +116,7 @@ export function useQuery<TResult>
     let cancel = false
     async function fetch() {
       try {
-        const data = await app.apiClient.query(queryRef.current, {
+        const data = await app.apiClient.query(query, paramsRef.current as TParams, {
           lookupCache: lookupCacheRef.current
         })
 
@@ -136,7 +146,7 @@ export function useQuery<TResult>
     return () => {
       cancel = true
     }
-  }, [active, fetchCycle, query.params || noParams])
+  }, [active, fetchCycle, query, resource])
 
   const result = {
     data: state.data,
@@ -150,21 +160,15 @@ export function useQuery<TResult>
       }
 
       if (state.loading) {
-        if (typeof (query.cache && query.resource) !== 'string') {
-          throw new Error('Cannot suspend query.')
-        }
-
-        throw app.apiClient.query(query)
+        throw app.apiClient.query(query, params as TParams)
       }
 
-      return state.data || app.apiClient.lookup(query) as TResult
+      return typeof state.data !== 'undefined'
+        ? state.data
+        : app.apiClient.lookup(resource) as TResult
     },
     preload() {
-      if (typeof (query.cache && query.resource) !== 'string') {
-        throw new Error('Cannot suspend query.')
-      }
-
-      app.apiClient.query(query)
+      app.apiClient.query(query, params as TParams)
       return result
     }
   }

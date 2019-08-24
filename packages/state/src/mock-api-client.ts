@@ -6,12 +6,8 @@ type Func<TParams, TResult> =
   ? () => TResult
   : (params: TParams) => TResult
 
-type QueryFactory<TResult, TParams> =
-  | Query<TResult>
-  | Func<TParams, Query<TResult>>
-
 export class MockApiError extends Error {
-  constructor(public readonly item: Action<any, any> | Query<any>) {
+  constructor(public readonly item: Action<any, any> | Query<any, any>) {
     super('Could not find mock implementation for action or query')
   }
 }
@@ -26,13 +22,13 @@ export class MockApiClient extends CachedApiClient {
     this.actionMap = new Map()
   }
 
-  protected fetch<TResult>(query: Query<TResult>): Promise<TResult> {
-    const interceptor = this.queryMap.get(query.factory || query)
+  protected fetch<TResult, TParams>(query: Query<TResult, TParams>, params: TParams): Promise<TResult> {
+    const interceptor = this.queryMap.get(query)
     if (!interceptor) {
       throw new MockApiError(query)
     }
 
-    return interceptor(query.params)
+    return interceptor(params)
   }
 
   protected perform<TParams, TResult>(action: Action<TParams, TResult>, params: TParams): Promise<TResult> {
@@ -45,7 +41,7 @@ export class MockApiClient extends CachedApiClient {
   }
 
   withQuery<TResult, TParams = void>(
-    factory: QueryFactory<TResult, TParams>,
+    factory: Query<TResult, TParams>,
     result: Func<TParams, Promise<TResult>>
   ): this {
     this.queryMap.set(factory, result)
