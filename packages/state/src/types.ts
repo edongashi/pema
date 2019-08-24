@@ -110,6 +110,8 @@ export interface ApiClient {
   invalidate(resources: string[] | string, refetch?: boolean): void
   refetch(resources: string[] | string): void
   lookup<TResult>(resource: string): TResult | undefined
+  query<TResult>(query: Query<TResult>): Promise<TResult>
   query<TResult, TParams>(query: Query<TResult, TParams>, params: TParams, options?: QueryOptions): Promise<TResult>
+  action<TResult>(action: Action<void, TResult>): Promise<TResult>
   action<TParams, TResult>(action: Action<TParams, TResult>, params: TParams): Promise<TResult>
 }

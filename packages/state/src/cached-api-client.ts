@@ -168,9 +168,11 @@ export class CachedApiClient implements ApiClient {
     }
   }
 
+  query<TResult>(query: Query<TResult>): Promise<TResult>
+  query<TResult, TParams>(query: Query<TResult, TParams>, params: TParams, options?: QueryOptions): Promise<TResult>
   async query<TResult, TParams>(
     query: Query<TResult, TParams>,
-    params: TParams,
+    params?: TParams,
     options: QueryOptions = {}
   ): Promise<TResult> {
     const {
@@ -178,7 +180,7 @@ export class CachedApiClient implements ApiClient {
       lookupCache = true,
       dedupe = true
     } = options
-    const resource = resolve(query.resource, params) as string
+    const resource = resolve(query.resource, params as TParams) as string
     invariant(typeof resource === 'string', 'Queries must provide valid resource keys.')
 
     const cached = lookupCache ? this.lookup<TResult>(resource) : undefined
@@ -186,7 +188,7 @@ export class CachedApiClient implements ApiClient {
       return cached
     }
 
-    const progress = (allowProgress && resolve(query.progress, params))
+    const progress = (allowProgress && resolve(query.progress, params as TParams))
       ? this.app.progress
       : null
 
@@ -195,7 +197,7 @@ export class CachedApiClient implements ApiClient {
     if (dedupe && inflight.has(resource)) {
       promise = inflight.get(resource) as Promise<TResult>
     } else {
-      promise = this.fetchWrapper(query, resource, params)
+      promise = this.fetchWrapper(query, resource, params as TParams)
       if (dedupe) {
         promise = promise.then(res => {
           if (inflight.get(resource) === promise) {
@@ -232,10 +234,14 @@ export class CachedApiClient implements ApiClient {
     return action.perform(params, this.app)
   }
 
-  async action<TParams, TResult>
-    (action: Action<TParams, TResult>, params: TParams): Promise<TResult> {
+  action<TResult>(action: Action<void, TResult>): Promise<TResult>
+  action<TParams, TResult>(action: Action<TParams, TResult>, params: TParams): Promise<TResult>
+  async action<TParams, TResult>(
+    action: Action<TParams, TResult>,
+    params?: TParams
+  ): Promise<TResult> {
     if (action.schema) {
-      params = await action.schema.validate(params) || params
+      params = await action.schema.validate(params as TParams) || params
     }
 
     const apiClient = this
@@ -290,11 +296,11 @@ export class CachedApiClient implements ApiClient {
 
     try {
       runHook(action.optimistic, {})
-      const result = await this.perform(action, params)
+      const result = await this.perform(action, params as TParams)
       runHook(action.onSuccess, { result })
       if (action.invalidates) {
         const resources = typeof action.invalidates === 'function'
-          ? action.invalidates({ params, app, apiClient, action, result })
+          ? action.invalidates({ params: params as TParams, app, apiClient, action, result })
           : action.invalidates
         this.invalidate(resources)
       }
