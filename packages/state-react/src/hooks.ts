@@ -9,8 +9,6 @@ interface App extends AppNode {
   apiClient: ApiClient
 }
 
-const noParams = {}
-
 export function useQuery<TResult>(
   query: Query<TResult, void>
 ): QueryResult<TResult>

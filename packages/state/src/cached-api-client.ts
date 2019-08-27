@@ -296,7 +296,13 @@ export class CachedApiClient implements ApiClient {
 
     const apiClient = this
     const { app } = this
-    const progress = action.progress ? app.progress : null
+    const progress = resolve(action.progress, {
+      params: params as TParams,
+      action,
+      apiClient,
+      app
+    }) ? app.progress : null
+
     if (progress) {
       progress.start()
     }
