@@ -27,10 +27,24 @@ export function resolve<T, TParam>(value: MaybeComputed<T, TParam> | undefined, 
   }
 }
 
+enum PromiseState {
+  Pending = 0,
+  Resolved = 1,
+  Rejected = 2
+}
+
+interface TrackedPromise {
+  promise: Promise<any>
+  state: PromiseState
+  value: any
+}
+
+const INFLIGHT_DURATION = 3_000
+
 export class CachedApiClient implements ApiClient {
   protected readonly app: App
-  private inflight: Map<string, Promise<any>>
-  private cache: Map<string, CacheItem>
+  private readonly inflight: Map<string, TrackedPromise>
+  private readonly cache: Map<string, CacheItem>
 
   constructor(state: any, app: App) {
     this.app = app
@@ -45,8 +59,8 @@ export class CachedApiClient implements ApiClient {
 
     const { app, cache, inflight } = this
     if (resources === '*') {
-      this.cache = new Map()
-      this.inflight = new Map()
+      this.cache.clear()
+      this.inflight.clear()
       app.emit('apiClient.refetch', '*')
       return
     }
@@ -177,11 +191,10 @@ export class CachedApiClient implements ApiClient {
   ): Promise<TResult> {
     const {
       allowProgress = true,
-      lookupCache = true,
-      dedupe = true
+      lookupCache = true
     } = options
     const resource = resolve(query.resource, params as TParams) as string
-    invariant(typeof resource === 'string', 'Queries must provide valid resource keys.')
+    invariant(typeof resource === 'string')
 
     const cached = lookupCache ? this.lookup<TResult>(resource) : undefined
     if (typeof cached !== 'undefined') {
@@ -194,27 +207,34 @@ export class CachedApiClient implements ApiClient {
 
     let promise: Promise<TResult>
     const { inflight } = this
-    if (dedupe && inflight.has(resource)) {
-      promise = inflight.get(resource) as Promise<TResult>
+    let state = inflight.get(resource) as TrackedPromise
+    if (state && state.state === PromiseState.Pending) {
+      promise = state.promise
     } else {
-      promise = this.fetchWrapper(query, resource, params as TParams)
-      if (dedupe) {
-        promise = promise.then(res => {
-          if (inflight.get(resource) === promise) {
+      state = { state: PromiseState.Pending } as TrackedPromise
+
+      function terminateWith(value: any, promiseState: PromiseState) {
+        state.state = promiseState
+        state.value = value
+        setTimeout(() => {
+          if (inflight.get(resource) === state) {
             inflight.delete(resource)
           }
+        }, INFLIGHT_DURATION)
+      }
 
+      promise = this
+        .fetchWrapper(query, resource, params as TParams)
+        .then(res => {
+          terminateWith(res, PromiseState.Resolved)
           return res
         }, err => {
-          if (inflight.get(resource) === promise) {
-            inflight.delete(resource)
-          }
-
+          terminateWith(err, PromiseState.Rejected)
           throw err
         })
 
-        inflight.set(resource, promise)
-      }
+      state.promise = promise
+      inflight.set(resource, state)
     }
 
     if (progress) {
@@ -228,6 +248,36 @@ export class CachedApiClient implements ApiClient {
         progress.done()
       }
     }
+  }
+
+  suspend<TResult>(query: Query<TResult>): TResult
+  suspend<TResult, TParams>(query: Query<TResult, TParams>, params: TParams): TResult
+  suspend<TResult, TParams>(
+    query: Query<TResult, TParams>,
+    params?: TParams
+  ): TResult {
+    const resource = resolve(query.resource, params as TParams) as string
+    invariant(typeof resource === 'string')
+    const item = this.lookup<TResult>(resource)
+    if (typeof item !== 'undefined') {
+      return item
+    }
+
+    const state = this.inflight.get(resource)
+    if (state) {
+      switch (state.state) {
+        case PromiseState.Pending:
+          throw state.promise
+        case PromiseState.Resolved:
+          return state.value
+        case PromiseState.Rejected:
+          throw state.value
+      }
+    }
+
+    throw this.query(query, params as TParams, {
+      lookupCache: false
+    })
   }
 
   protected perform<TParams, TResult>(action: Action<TParams, TResult>, params: TParams): Promise<TResult> {

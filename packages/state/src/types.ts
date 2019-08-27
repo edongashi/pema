@@ -103,7 +103,6 @@ export interface Action<TParams = void, TResult = void, TApp = any> {
 export interface QueryOptions {
   allowProgress?: boolean
   lookupCache?: boolean
-  dedupe?: boolean
 }
 
 export interface ApiClient {
@@ -112,6 +111,8 @@ export interface ApiClient {
   lookup<TResult>(resource: string): TResult | undefined
   query<TResult>(query: Query<TResult>): Promise<TResult>
   query<TResult, TParams>(query: Query<TResult, TParams>, params: TParams, options?: QueryOptions): Promise<TResult>
+  suspend<TResult>(query: Query<TResult>): TResult
+  suspend<TResult, TParams>(query: Query<TResult, TParams>, params: TParams): TResult
   action<TResult>(action: Action<void, TResult>): Promise<TResult>
   action<TParams, TResult>(action: Action<TParams, TResult>, params: TParams): Promise<TResult>
 }

@@ -159,13 +159,9 @@ export function useQuery<TResult, TParams>(
         throw state.error
       }
 
-      if (state.loading) {
-        throw app.apiClient.query(query, params as TParams)
-      }
-
       return typeof state.data !== 'undefined'
         ? state.data
-        : app.apiClient.lookup(resource) as TResult
+        : app.apiClient.suspend(query, params as TParams) as TResult
     },
     preload() {
       app.apiClient.query(query, params as TParams)
