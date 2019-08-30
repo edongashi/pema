@@ -80,6 +80,10 @@ export function join(path1: string, path2: string): string {
     path2 = path2.substr(1)
   }
 
+  if (!path2) {
+    return path1
+  }
+
   if (path1[path1.length - 1] === '/') {
     return path1 + path2
   } else {
