@@ -8,8 +8,14 @@ export function matchResource(pattern: string, resource: string): boolean {
   }
 
   const patternParts = pattern.split('/')
+  let len = patternParts.length
+  const exact = patternParts[len - 1] === ''
+  if (exact) {
+    len--
+  }
+
   const resourceParts = resource.split('/')
-  for (let i = 0; i < patternParts.length; i++) {
+  for (let i = 0; i < len; i++) {
     if (patternParts[i] === '*') {
       continue
     }
@@ -19,5 +25,5 @@ export function matchResource(pattern: string, resource: string): boolean {
     }
   }
 
-  return true
+  return !exact || len === resourceParts.length
 }
