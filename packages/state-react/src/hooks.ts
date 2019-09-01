@@ -47,6 +47,7 @@ export function useQuery<TResult, TParams>(
   const [state, setState] = useState<QueryState<TResult>>({
     data: initialData as TResult,
     loading: typeof initialData === 'undefined',
+    reloading: false,
     error: false
   })
 
@@ -74,7 +75,7 @@ export function useQuery<TResult, TParams>(
       if (matchResource(pattern, resource)) {
         setState(current => (current.loading || current.error)
           ? current
-          : { data: map(current.data), loading: false, error: false })
+          : { data: map(current.data), loading: false, error: false, reloading: false })
       }
     }
 
@@ -114,6 +115,13 @@ export function useQuery<TResult, TParams>(
     let cancel = false
     async function fetch() {
       try {
+        setState(current => current.loading ? current : {
+          data: current.data,
+          loading: false,
+          error: current.error,
+          reloading: true
+        })
+
         const data = await app.apiClient.query(query, paramsRef.current as TParams, {
           lookupCache: lookupCacheRef.current
         })
@@ -125,7 +133,8 @@ export function useQuery<TResult, TParams>(
         setState({
           data,
           loading: false,
-          error: false
+          error: false,
+          reloading: false
         })
       } catch (error) {
         if (cancel) {
@@ -135,7 +144,8 @@ export function useQuery<TResult, TParams>(
         setState(current => ({
           data: current.data,
           loading: false,
-          error: error || true
+          error: error || true,
+          reloading: false
         }))
       }
     }
@@ -149,6 +159,7 @@ export function useQuery<TResult, TParams>(
   const result = {
     data: state.data,
     loading: state.loading,
+    reloading: state.reloading || state.loading,
     error: state.error,
     refetch,
     ready: !state.loading && !state.error,

@@ -9,6 +9,7 @@ export interface UseQueryOptions {
 export interface QueryState<TResult> {
   data: TResult
   loading: boolean
+  reloading: boolean
   error: any
 }
 
