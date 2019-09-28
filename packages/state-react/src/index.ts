@@ -1,2 +1,2 @@
-export { useAction, useQuery } from './hooks'
+export { useAction, useLoadingAction, useQuery } from './hooks'
 export * from './types'
