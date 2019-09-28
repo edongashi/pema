@@ -1,7 +1,7 @@
 import { AppNode } from '@pema/app'
 import { invariant } from '@pema/utils'
 import { matchResource } from './match-resource'
-import { Action, ApiClient, Query, QueryOptions, MaybeComputed } from './types'
+import { Action, ApiClient, Query, QueryOptions, MaybeComputed, MaybeComputedWithContext } from './types'
 
 interface App extends AppNode {
   progress?: {
@@ -16,12 +16,24 @@ interface CacheItem {
 }
 
 export interface UpdateMap {
-  [resource: string]: (context: any) => any
+  [resource: string]: (params: any, context: any) => any
 }
 
-export function resolve<T, TParam>(value: MaybeComputed<T, TParam> | undefined, param: TParam): T | undefined {
+function resolve<T, TParams>(value: MaybeComputed<T, TParams> | undefined, param: TParams): T | undefined {
   if (typeof value === 'function') {
-    return (value as (param: TParam) => T)(param)
+    return (value as (param: TParams) => T)(param)
+  } else {
+    return value
+  }
+}
+
+function resolveContext<T, TParams, TContext>(
+  value: MaybeComputedWithContext<T, TParams, TContext> | undefined,
+  param: TParams,
+  context: TContext
+) {
+  if (typeof value === 'function') {
+    return (value as (param: TParams, context: TContext) => T)(param, context)
   } else {
     return value
   }
@@ -296,7 +308,7 @@ export class CachedApiClient implements ApiClient {
 
     const apiClient = this
     const { app } = this
-    const progress = resolve(action.progress, {
+    const progress = resolveContext(action.progress, params as TParams, {
       params: params as TParams,
       action,
       apiClient,
@@ -307,7 +319,7 @@ export class CachedApiClient implements ApiClient {
       progress.start()
     }
 
-    function runHook(map: UpdateMap | ((ctx: any) => UpdateMap) | void, additionalProps: {}) {
+    function runHook(map: UpdateMap | ((params: any, ctx: any) => UpdateMap) | void, additionalProps: {}) {
       if (!map) {
         return
       }
@@ -321,7 +333,7 @@ export class CachedApiClient implements ApiClient {
       }
 
       if (typeof map === 'function') {
-        map = map(baseContext)
+        map = map(params, baseContext)
         if (!map) {
           return
         }
@@ -331,10 +343,10 @@ export class CachedApiClient implements ApiClient {
       for (const resource in map) {
         const update = map[resource]
         function wrapper(value: any) {
-          const mappedValue = update({
+          const mappedValue = update(params, {
             ...baseContext,
             resource,
-            value,
+            value
           })
 
           if (typeof mappedValue === 'undefined') {
@@ -356,10 +368,10 @@ export class CachedApiClient implements ApiClient {
       runHook(action.onSuccess, { result })
       if (action.invalidates) {
         const resources = typeof action.invalidates === 'function'
-          ? action.invalidates({ params: params as TParams, app, apiClient, action, result })
+          ? action.invalidates(params as TParams, { params: params as TParams, app, apiClient, action, result })
           : action.invalidates
         this.invalidate(resources)
-        const eager = resolve(action.eager, {
+        const eager = resolveContext(action.eager, params as TParams, {
           params: params as TParams,
           action,
           apiClient,

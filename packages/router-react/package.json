@@ -1,7 +1,7 @@
 {
   "name": "@pema/router-react",
   "private": false,
-  "version": "0.1.0-alpha.6",
+  "version": "0.1.0-alpha.7",
   "description": "> TODO: description",
   "author": "Edon Gashi <edon.gashi@uni-pr.edu>",
   "homepage": "https://github.com/edongashi/pema#readme",
@@ -29,9 +29,9 @@
     "url": "https://github.com/edongashi/pema/issues"
   },
   "dependencies": {
-    "@pema/app": "^0.1.0-alpha.6",
-    "@pema/app-react": "^0.1.0-alpha.6",
-    "@pema/router": "^0.1.0-alpha.6",
+    "@pema/app": "^0.1.0-alpha.7",
+    "@pema/app-react": "^0.1.0-alpha.7",
+    "@pema/router": "^0.1.0-alpha.7",
     "classnames": "^2.2.6"
   },
   "devDependencies": {

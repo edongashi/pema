@@ -1,3 +1,3 @@
 export * from './types'
-export { CachedApiClient, resolve } from './cached-api-client'
+export { CachedApiClient } from './cached-api-client'
 export { matchResource } from './match-resource'

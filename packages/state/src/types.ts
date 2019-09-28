@@ -46,13 +46,13 @@ export interface FailedActionUpdateContext<TParams, TResult, TApp>
   extends FailedActionContext<TParams, TResult, TApp>, UpdateContext { }
 
 export type OptimisticActionUpdate<TParams, TResult, TApp> =
-  (context: ActionUpdateContext<TParams, TResult, TApp>) => any
+  (params: TParams, context: ActionUpdateContext<TParams, TResult, TApp>) => any
 
 export type PostActionUpdate<TParams, TResult, TApp> =
-  (context: PostActionUpdateContext<TParams, TResult, TApp>) => any
+  (params: TParams, context: PostActionUpdateContext<TParams, TResult, TApp>) => any
 
 export type FailedActionUpdate<TParams, TResult, TApp> =
-  (context: FailedActionUpdateContext<TParams, TResult, TApp>) => any
+  (params: TParams, context: FailedActionUpdateContext<TParams, TResult, TApp>) => any
 
 export interface OptimisticUpdateMap<TParams, TResult, TApp> {
   [resource: string]: OptimisticActionUpdate<TParams, TResult, TApp>
@@ -66,7 +66,7 @@ export interface FailedActionUpdateMap<TParams, TResult, TApp> {
   [resource: string]: FailedActionUpdate<TParams, TResult, TApp>
 }
 
-export type MaybeComputed<T, TContext> = T | ((context: TContext) => T)
+export type MaybeComputed<T, TParams> = T | ((params: TParams) => T)
 
 export interface Schema<TParams> {
   validate(params: TParams): Promise<TParams>
@@ -75,29 +75,39 @@ export interface Schema<TParams> {
   isValidSync(params: TParams): boolean
 }
 
+export type MaybeComputedWithContext<T, TParams, TContext> =
+  | T
+  | ((params: TParams, context: TContext) => T)
+
 export interface Action<TParams = void, TResult = void, TApp = any> {
-  readonly progress?: MaybeComputed<
+  readonly progress?: MaybeComputedWithContext<
     boolean,
+    TParams,
     ActionContext<TParams, TResult, TApp>
   >
-  readonly eager?: MaybeComputed<
+  readonly eager?: MaybeComputedWithContext<
     boolean,
+    TParams,
     ActionContext<TParams, TResult, TApp>
   >
-  readonly optimistic?: MaybeComputed<
+  readonly optimistic?: MaybeComputedWithContext<
     OptimisticUpdateMap<TParams, TResult, TApp>,
+    TParams,
     ActionContext<TParams, TResult, TApp>
   >
-  readonly onSuccess?: MaybeComputed<
+  readonly onSuccess?: MaybeComputedWithContext<
     PostActionUpdateMap<TParams, TResult, TApp>,
+    TParams,
     PostActionContext<TParams, TResult, TApp>
   >
-  readonly onError?: MaybeComputed<
+  readonly onError?: MaybeComputedWithContext<
     FailedActionUpdateMap<TParams, TResult, TApp>,
+    TParams,
     FailedActionContext<TParams, TResult, TApp>
   >
-  readonly invalidates?: MaybeComputed<
+  readonly invalidates?: MaybeComputedWithContext<
     string[],
+    TParams,
     PostActionContext<TParams, TResult, TApp>
   >
   readonly schema?: Schema<TParams>

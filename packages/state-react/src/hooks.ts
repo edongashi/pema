@@ -1,5 +1,5 @@
 import { AppNode } from '@pema/app'
-import { ApiClient, Action, Query, matchResource, resolve } from '@pema/state'
+import { ApiClient, Action, Query, matchResource } from '@pema/state'
 import { useApp } from '@pema/app-react'
 import { invariant } from '@pema/utils'
 import { useEffect, useState, useRef, useMemo } from 'react'
@@ -22,7 +22,9 @@ export function useQuery<TResult, TParams>(
   params?: TParams,
   options?: UseQueryOptions
 ): QueryResult<TResult> {
-  const resource = resolve(query.resource, params as TParams) as string
+  const resource = typeof query.resource === 'function'
+    ? query.resource(params as TParams)
+    : query.resource as string
   invariant(typeof resource === 'string')
 
   // Context
