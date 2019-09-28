@@ -240,6 +240,7 @@ export function useLoadingAction
   const [loading, setLoading] = useState(false)
   const callRef = useRef(0)
   const app = useApp<App>()
+  useEffect(() => () => { callRef.current = -1 }, [])
   const invokeMemo = useMemo(() => {
     async function invoke(params: TParams): Promise<TResult> {
       const current = ++callRef.current
@@ -257,7 +258,5 @@ export function useLoadingAction
     invoke.schema = schema
     return invoke
   }, [action])
-
-  useEffect(() => () => { callRef.current = -1 }, [])
   return [(invokeMemo as any) as ActionInvoker<TParams, TResult>, loading]
 }
