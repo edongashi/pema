@@ -2,7 +2,7 @@ import { AppNode } from '@pema/app'
 import { ApiClient, Action, Query, matchResource, resolve } from '@pema/state'
 import { useApp } from '@pema/app-react'
 import { invariant } from '@pema/utils'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { ActionInvoker, QueryState, QueryResult, UseQueryOptions } from './types'
 
 interface App extends AppNode {
@@ -79,13 +79,32 @@ export function useQuery<TResult, TParams>(
       }
     }
 
+    function matchHandler(pattern: string | string[], fetchers: Array<() => Promise<any>>) {
+      if (cancel) {
+        return
+      }
+
+      if (typeof pattern === 'string') {
+        pattern = [pattern]
+      }
+
+      if (pattern.some(p => matchResource(p, resource))) {
+        fetchers.push(() => app.apiClient.query(query, paramsRef.current as TParams, {
+          lookupCache: true,
+          allowProgress: false
+        }))
+      }
+    }
+
     app.events.on('apiClient.refetch', refetchHandler)
     app.events.on('apiClient.map', mapHandler)
+    app.events.on('apiClient.match', matchHandler)
 
     return () => {
       cancel = true
       app.events.off('apiClient.refetch', refetchHandler)
       app.events.off('apiClient.map', refetchHandler)
+      app.events.off('apiClient.match', matchHandler)
     }
   }, [app, resource])
 
@@ -200,11 +219,43 @@ export function useAction
   <TParams, TResult>(action: Action<TParams, TResult>):
   ActionInvoker<TParams, TResult> {
   const app = useApp<App>()
-  function invoke(params: TParams): Promise<TResult> {
-    return app.apiClient.action(action, params)
-  }
+  const invokeMemo = useMemo(() => {
+    function invoke(params: TParams): Promise<TResult> {
+      return app.apiClient.action(action, params)
+    }
 
-  const schema = action.schema || dummySchema
-  invoke.schema = schema
-  return (invoke as any) as ActionInvoker<TParams, TResult>
+    const schema = action.schema || dummySchema
+    invoke.schema = schema
+    return invoke
+  }, [action])
+
+  return (invokeMemo as any) as ActionInvoker<TParams, TResult>
+}
+
+export function useLoadingAction
+  <TParams, TResult>(action: Action<TParams, TResult>):
+  [ActionInvoker<TParams, TResult>, boolean] {
+  const [loading, setLoading] = useState(false)
+  const callRef = useRef(0)
+  const app = useApp<App>()
+  const invokeMemo = useMemo(() => {
+    async function invoke(params: TParams): Promise<TResult> {
+      const current = ++callRef.current
+      setLoading(true)
+      try {
+        return await app.apiClient.action(action, params)
+      } finally {
+        if (callRef.current === current) {
+          setLoading(false)
+        }
+      }
+    }
+
+    const schema = action.schema || dummySchema
+    invoke.schema = schema
+    return invoke
+  }, [action])
+
+  useEffect(() => () => { callRef.current = -1 }, [])
+  return [(invokeMemo as any) as ActionInvoker<TParams, TResult>, loading]
 }

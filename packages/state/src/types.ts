@@ -80,6 +80,10 @@ export interface Action<TParams = void, TResult = void, TApp = any> {
     boolean,
     ActionContext<TParams, TResult, TApp>
   >
+  readonly eager?: MaybeComputed<
+    boolean,
+    ActionContext<TParams, TResult, TApp>
+  >
   readonly optimistic?: MaybeComputed<
     OptimisticUpdateMap<TParams, TResult, TApp>,
     ActionContext<TParams, TResult, TApp>

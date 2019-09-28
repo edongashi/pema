@@ -359,6 +359,24 @@ export class CachedApiClient implements ApiClient {
           ? action.invalidates({ params: params as TParams, app, apiClient, action, result })
           : action.invalidates
         this.invalidate(resources)
+        const eager = resolve(action.eager, {
+          params: params as TParams,
+          action,
+          apiClient,
+          app
+        })
+
+        if (!eager) {
+          const fetchers: Array<() => Promise<any>> = []
+          app.emit('apiClient.match', resources, fetchers)
+          if (fetchers.length > 0) {
+            try {
+              await Promise.all(fetchers.map(fetcher => fetcher()))
+            } catch {
+              // ignored
+            }
+          }
+        }
       }
 
       return result
